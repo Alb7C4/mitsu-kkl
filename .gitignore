@@ -1,0 +1,11 @@
+# Local data: recordings, window settings, editor temp files
+logs/
+mut_gui.json
+*.tmp
+
+# Python / build output
+__pycache__/
+*.py[cod]
+build/
+dist/
+*.spec

@@ -1,0 +1,175 @@
+﻿# MUT-II PID definitions (engine ECU). Separator: semicolon. Lines starting with # are comments.
+# pid ; name ; conversion ; unit ; on list (1/0)
+# conversion: expression in x (raw byte 0-255), e.g. x*0.0733 | x*31.25 | x-40 | (x>>4)&15 | round(x*0.49, 1)
+#   or a keyword: dtc / dtc2 (fault code bits), bin (binary); empty = no conversion
+00 ; flags: bit7 = throttle closed ; bin ;  ; 1
+01 ;  ;  ;  ; 1
+03 ;  ;  ;  ; 1
+04 ; ignition timing ; x-20 ; ° ; 1
+05 ; ignition timing (direct, = 04-20) ; x ; ° ; 1
+06 ; ignition timing (scaled) ; x-20 ; ° ; 1
+07 ; coolant temp (raw) ;  ;  ; 1
+08 ;  ;  ;  ; 1
+09 ; ? changes after engine start ;  ;  ; 1
+0A ;  ;  ;  ; 1
+0B ;  ;  ;  ; 1
+0C ; fuel trim low (LTFT) ? ; (x-128)/5 ; % ; 1
+0D ; fuel trim mid (LTFT) ? ; (x-128)/5 ; % ; 1
+0E ; fuel trim high (LTFT) ? ; (x-128)/5 ; % ; 1
+0F ; O2 feedback trim (STFT) ? ; (x-128)/5 ; % ; 1
+10 ; coolant temp ; x-40 ; °C ; 1
+11 ; intake air temp used by ECU (25 °C = failsafe) ; x-40 ; °C ; 1
+12 ; coolant temp (copy of 10) ; x-40 ; °C ; 1
+13 ; front O2 sensor ; x*0.0195 ; V ; 1
+14 ; battery voltage ; x*0.0733 ; V ; 1
+15 ; barometric pressure ; x*0.49 ; kPa ; 1
+16 ; idle control ISC steps ;  ;  ; 1
+17 ; throttle position TPS ; x*100/255 ; % ; 1
+18 ;  ;  ;  ; 1
+19 ; startup check bits ; bin ;  ; 1
+1A ; airflow ; x*6.25 ; Hz ; 1
+1B ;  ;  ;  ; 1
+1C ; engine load ;  ;  ; 1
+1D ; ? approx. engine load (not accel enrichment) ;  ;  ; 1
+1E ;  ;  ;  ; 1
+1F ; engine load (previous, = 1C) ;  ;  ; 1
+20 ; engine speed (idle scale) ; x*7.8125 ; rpm ; 1
+21 ; engine speed ; x*31.25 ; rpm ; 1
+22 ;  ;  ;  ; 1
+23 ; ? flags: bit4 = idle ; bin ;  ; 1
+24 ; target idle speed ; x*7.8125 ; rpm ; 1
+25 ; idle control ISC value ;  ;  ; 1
+26 ; knock sum ? ;  ;  ; 1
+27 ; octane level ? ; x*100/255 ; % ; 1
+28 ;  ;  ;  ; 1
+29 ; injector pulse width (coarse) ;  ;  ; 1
+2A ; ? noisy, low byte of a 16-bit value ;  ;  ; 1
+2B ; injector pulse width (copy of 29) ;  ;  ; 1
+2C ; ? noisy, like 2A ;  ;  ; 1
+2D ; battery voltage compensation ;  ;  ; 1
+2E ;  ;  ;  ; 1
+2F ; vehicle speed ? ; x*2 ; km/h ; 1
+30 ; knock sensor voltage ? ; x*0.0195 ; V ; 1
+31 ;  ;  ;  ; 1
+32 ; target air/fuel ratio ; 14.7*128/max(x,1) ; AFR ; 1
+33 ; ignition timing (corrected) ; x-20 ; ° ; 1
+34 ;  ;  ;  ; 1
+35 ; limp-home fuel from TPS ;  ;  ; 1
+36 ;  ;  ;  ; 1
+37 ;  ;  ;  ; 1
+38 ;  ;  ;  ; 1
+39 ;  ;  ;  ; 1
+3A ; intake air temp IAT (raw) ;  ;  ; 1
+3B ;  ;  ;  ; 1
+3C ; rear O2 sensor ? ; x*0.0195 ; V ; 1
+3D ; rear O2 sensor ? (copy of 3C) ; x*0.0195 ; V ; 1
+3E ; front O2 sensor (copy of 13) ; x*0.0195 ; V ; 1
+3F ;  ;  ;  ; 1
+40 ; active fault codes (1) ; dtc ;  ; 1
+41 ; active fault codes (2) ; dtc2 ;  ; 1
+42 ;  ;  ;  ; 1
+43 ;  ;  ;  ; 1
+44 ;  ;  ;  ; 1
+45 ; stored fault codes (1) ; dtc ;  ; 1
+46 ; stored fault codes (2) ; dtc2 ;  ; 1
+47 ;  ;  ;  ; 1
+48 ;  ;  ;  ; 1
+49 ;  ;  ;  ; 1
+4A ;  ;  ;  ; 1
+4B ;  ;  ;  ; 1
+4C ;  ;  ;  ; 1
+4D ;  ;  ;  ; 1
+4E ;  ;  ;  ; 1
+4F ;  ;  ;  ; 1
+50 ; long-term fuel trim (current) ? ; (x-128)/5 ; % ; 1
+51 ;  ;  ;  ; 1
+52 ;  ;  ;  ; 1
+53 ;  ;  ;  ; 1
+54 ; accel enrichment (TPS rising) ;  ;  ; 1
+55 ;  ;  ;  ; 1
+56 ; load change on acceleration ;  ;  ; 1
+57 ; load change on deceleration ;  ;  ; 1
+58 ; after-start enrichment ;  ;  ; 1
+59 ;  ;  ;  ; 1
+5A ;  ;  ;  ; 1
+5B ;  ;  ;  ; 1
+5C ; rear O2 sensor ADC ? ;  ;  ; 1
+5D ;  ;  ;  ; 1
+5E ;  ;  ;  ; 1
+5F ;  ;  ;  ; 1
+60 ;  ;  ;  ; 1
+61 ;  ;  ;  ; 1
+62 ;  ;  ;  ; 1
+63 ;  ;  ;  ; 1
+64 ;  ;  ;  ; 1
+65 ;  ;  ;  ; 1
+66 ;  ;  ;  ; 1
+67 ;  ;  ;  ; 1
+68 ;  ;  ;  ; 1
+69 ;  ;  ;  ; 1
+6A ; knock ADC (processed) ? ;  ;  ; 1
+6B ; knock base ? ;  ;  ; 1
+6C ;  ;  ;  ; 1
+6D ; knock change ? ;  ;  ; 1
+6E ; knock dynamics ? ;  ;  ; 1
+6F ;  ;  ;  ; 1
+70 ;  ;  ;  ; 1
+71 ; sensor error flags (b1 IAT, b6 TPS) ; bin ;  ; 1
+72 ;  ;  ;  ; 1
+73 ; throttle position change ;  ;  ; 1
+74 ;  ;  ;  ; 1
+75 ;  ;  ;  ; 1
+76 ; idle control demand ;  ;  ; 1
+77 ;  ;  ;  ; 1
+78 ;  ;  ;  ; 1
+79 ; injector latency (battery compensation) ;  ;  ; 1
+7A ;  ;  ;  ; 1
+7B ;  ;  ;  ; 1
+7C ;  ;  ;  ; 1
+7D ;  ;  ;  ; 1
+7E ;  ;  ;  ; 1
+7F ;  ;  ;  ; 1
+80 ;  ;  ;  ; 1
+81 ;  ;  ;  ; 1
+82 ;  ;  ;  ; 1
+84 ;  ;  ;  ; 1
+85 ; radiator fan duty ? ;  ;  ; 1
+86 ;  ;  ;  ; 1
+87 ;  ;  ;  ; 1
+88 ;  ;  ;  ; 1
+89 ;  ;  ;  ; 1
+8A ; TPS raw ADC ;  ;  ; 1
+8B ;  ;  ;  ; 1
+8C ; barometric pressure (copy of 15) ; x*0.49 ; kPa ; 1
+8D ;  ;  ;  ; 1
+8E ;  ;  ;  ; 1
+8F ;  ;  ;  ; 1
+90 ;  ;  ;  ; 1
+91 ;  ;  ;  ; 1
+92 ;  ;  ;  ; 1
+93 ;  ;  ;  ; 1
+9A ; ? flags: b7 after start, b3 during IAT event ; bin ;  ; 1
+9B ; flags: bit0 = throttle closed ; bin ;  ; 1
+9C ;  ;  ;  ; 1
+9D ;  ;  ;  ; 1
+9E ;  ;  ;  ; 1
+9F ;  ;  ;  ; 1
+A0 ; flags: bit1 = throttle closed ; bin ;  ; 1
+A3 ; flags: bit1 = throttle closed ; bin ;  ; 1
+A4 ; ? flags: bit5 = engine running ; bin ;  ; 1
+A5 ;  ;  ;  ; 1
+A6 ;  ;  ;  ; 1
+A7 ;  ;  ;  ; 1
+A8 ; pulse inputs (bit6 = airflow sensor signal) ; bin ;  ; 1
+AA ; flags: bit6 = throttle closed ; bin ;  ; 1
+AB ;  ;  ;  ; 1
+AC ; flags: bit7 = throttle above ~29% ; bin ;  ; 1
+AD ;  ;  ;  ; 1
+AE ; flags: bit0 = throttle closed ; bin ;  ; 1
+AF ; ? flags: b3 during IAT event ; bin ;  ; 1
+B0 ;  ;  ;  ; 1
+B1 ;  ;  ;  ; 1
+B2 ;  ;  ;  ; 1
+B3 ; flags: bit0 = throttle closed ; bin ;  ; 1
+FE ; ECU ID (hi) ;  ;  ; 0
+FF ; ECU ID (lo) ;  ;  ; 0

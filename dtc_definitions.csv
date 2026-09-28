@@ -1,0 +1,21 @@
+﻿# Mitsubishi fault code (DTC) definitions for the engine ECU. Separator: semicolon. Lines starting with # are comments.
+# bit ; code ; description
+# bit 0-7 = first fault byte (PID 40 active, 45 stored), bit 8-15 = second byte (PID 41 active, 46 stored); an empty bit only describes a code
+# Confirmed on this car (ECU ID E4 3A): bit 2 = 13, bit 3 = 14, bit 5 = 21, bit 9 = 25. The other bits follow the usual Mitsubishi order and are unverified.
+# Bit 12 comes on about 20 s after a cold start on this car: count the check-engine blinks to confirm its code number.
+0 ; 11 ; oxygen sensor
+1 ; 12 ; air flow sensor
+2 ; 13 ; intake air temperature sensor
+3 ; 14 ; throttle position sensor
+4 ; 15 ; idle speed control motor position
+5 ; 21 ; engine coolant temperature sensor
+6 ; 22 ; crank angle sensor
+7 ; 23 ; top dead centre sensor
+8 ; 24 ; vehicle speed sensor
+9 ; 25 ; barometric pressure sensor
+10 ; 31 ; knock sensor
+11 ; 32 ; manifold pressure sensor
+12 ; 36 ; ignition timing adjustment signal
+13 ; 39 ; second oxygen sensor
+14 ; 41 ; injector
+15 ; 42 ; fuel pump
