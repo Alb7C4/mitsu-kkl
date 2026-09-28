@@ -102,6 +102,17 @@ Use at your own risk. This project is not affiliated with Mitsubishi Motors.
 - [PID_znaczenia.md](PID_znaczenia.md): PID meanings found on the test car (Polish)
 - [mut2-ftdi-kkl-handoff.md](mut2-ftdi-kkl-handoff.md): background notes on MUT-II and the FTDI cable
 
+## Sources
+
+Protocol details and PID names were collected from these projects and pages, then checked on the test car:
+
+- [niallm90/libftdimut](https://github.com/niallm90/libftdimut) and [libftdimut-example](https://github.com/niallm90/libftdimut-example): MUT-II over an FTDI chip (break-based 5-baud init to 0x00, 15625 baud, request/response format)
+- [EvoEcu wiki – MUT Protocol](https://evoecu.logic.net/wiki/MUT_Protocol): init sequence, sync bytes `55 EF 85`, ECU ID requests
+- [EvoEcu wiki – MUT Requests](https://evoecu.logic.net/wiki/MUT_Requests): request ID list and conversions, the reference for the PID map
+- [MMCd datalogger](https://mmcdlogger.sourceforge.net/): early DSM protocol at 1953 baud (used for the `dsm` probe)
+- [FTDI D2XX Programmer's Guide](https://ftdichip.com/document/programming-guides/): break, bit-bang, latency timer and line status on FT232 chips
+- ISO 9141-2 and ISO 14230 (KWP2000): slow and fast init, key bytes, OBD framing
+
 ## License
 
 [MIT](LICENSE)

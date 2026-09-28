@@ -191,6 +191,17 @@ tryby 01/02/03/07/09 i 81/82/3E/1A. Zakres 0xC0–0xFC jest zablokowany w kodzie
 błędy, 0xF1–0xFC uruchamiają elementy wykonawcze i odcinają wtryski), podobnie jak tryb 04.
 Blokada działa, zanim cokolwiek trafi na linię.
 
+## Źródła
+
+Szczegóły protokołu i nazwy PID-ów zebrane z poniższych projektów i stron, a potem sprawdzone na aucie:
+
+- [niallm90/libftdimut](https://github.com/niallm90/libftdimut) i [libftdimut-example](https://github.com/niallm90/libftdimut-example): MUT-II przez układ FTDI (inicjalizacja 5 bodów breakiem, adres 0x00, 15625 bodów, format zapytań)
+- [EvoEcu wiki – MUT Protocol](https://evoecu.logic.net/wiki/MUT_Protocol): sekwencja inicjalizacji, bajty `55 EF 85`, zapytania o ID ECU
+- [EvoEcu wiki – MUT Requests](https://evoecu.logic.net/wiki/MUT_Requests): lista zapytań i przeliczników, punkt odniesienia dla mapy PID-ów
+- [MMCd datalogger](https://mmcdlogger.sourceforge.net/): protokół wczesnych DSM przy 1953 bodach (próba `dsm`)
+- [FTDI D2XX Programmer's Guide](https://ftdichip.com/document/programming-guides/): break, bitbang, latency i status linii w FT232
+- ISO 9141-2 i ISO 14230 (KWP2000): inicjalizacja wolna i szybka, key bytes, ramki OBD
+
 ## Symulator
 
 `--backend sim --sim mut|iso|kwp|dsm|none|dead` pozwala testować logikę bez auta. Logi
