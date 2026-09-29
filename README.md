@@ -10,6 +10,7 @@ never get an answer. This project talks to such an ECU from a PC through the sim
 USB-to-K-line cable, and adds a probe that tries many init methods, speeds and addresses
 and logs every byte, for cars where nobody knows what works.
 
+**Especially useful for 1998–1999 model years**, whose engine ECU most scan tools cannot talk to.
 Developed and tested on a **Mitsubishi Eclipse 1998 2.0 16V 4G63 (EU)**, engine ECU ID `E4 3A`.
 
 ## What's inside

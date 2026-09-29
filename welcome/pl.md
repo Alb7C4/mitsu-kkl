@@ -4,6 +4,8 @@ Program odczytuje dane z komputera silnika starszych Mitsubishi z lat 90. (spraw
 Pokazuje na żywo odczyty czujników, na przykład obroty, temperaturę silnika, napięcie akumulatora
 i położenie pedału gazu, oraz kody usterek.
 
+**Szczególnie przydatny dla roczników 1998–1999**, z którymi większość zwykłych testerów diagnostycznych się nie łączy.
+
 **Program tylko odczytuje dane. Niczego nie zmienia w samochodzie.**
 
 ## Czego potrzebujesz

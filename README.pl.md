@@ -10,6 +10,7 @@ Większość uniwersalnych diagnoskopów nie dostaje żadnej odpowiedzi. Ten pro
 sterownikiem z komputera przez najprostszy kabel USB–linia K. Ma też sondę, która próbuje wielu
 sposobów inicjalizacji, prędkości i adresów i zapisuje każdy bajt, dla aut, o których nikt nie wie, co działa.
 
+**Szczególnie przydatny dla roczników 1998–1999**, z których sterownikiem silnika większość diagnoskopów się nie łączy.
 Powstał i był testowany na **Mitsubishi Eclipse 1998 2.0 16V 4G63 (wersja EU)**, ID sterownika silnika `E4 3A`.
 
 ## Co jest w środku

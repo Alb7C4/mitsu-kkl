@@ -4,6 +4,8 @@ This program reads data from the engine computer of older 1990s Mitsubishi cars 
 It shows live sensor readings, such as engine speed, engine temperature, battery voltage and
 accelerator position, and the fault codes.
 
+**Especially useful for 1998–1999 model years**, which most ordinary diagnostic testers cannot connect to.
+
 **The program only reads data. It never changes anything in the car.**
 
 ## What you need
