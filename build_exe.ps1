@@ -1,13 +1,16 @@
 # Builds the Windows release: two standalone .exe files (no Python needed) packed in a zip.
 #
-#   powershell -ExecutionPolicy Bypass -File build_exe.ps1 -Version 0.1.0
+#   powershell -ExecutionPolicy Bypass -File build_exe.ps1
 #
-# Build files go to %TEMP%\mitsu-kkl-build (not into this folder, which may sit in a synced
-# drive). The script prints the path of the finished zip.
-param([string]$Version = "dev")
+# The version comes from kkl/__init__.py (__version__); the GitHub release tag must be v<version>.
+# PyInstaller works in %TEMP%\mitsu-kkl-build; the finished folder and zip are copied to .\dist
+# (ignored by git).
 $ErrorActionPreference = "Stop"
 
 $src = $PSScriptRoot
+$m = Select-String -Path (Join-Path $src "kkl\__init__.py") -Pattern '__version__\s*=\s*"([^"]+)"'
+if (-not $m) { throw "__version__ not found in kkl\__init__.py" }
+$Version = $m.Matches[0].Groups[1].Value
 $work = Join-Path $env:TEMP "mitsu-kkl-build"
 $dist = Join-Path $work "dist"
 
@@ -25,7 +28,8 @@ foreach ($app in $apps) {
     if ($LASTEXITCODE) { throw "PyInstaller failed for $($app.Name)" }
 }
 
-$pkg = Join-Path $work "mitsu-kkl-$Version-windows"
+$name = "mitsu-kkl-$Version-windows"
+$pkg = Join-Path $work $name
 if (Test-Path $pkg) { Remove-Item $pkg -Recurse -Force }
 New-Item -ItemType Directory $pkg | Out-Null
 Copy-Item (Join-Path $dist "mut_gui.exe"), (Join-Path $dist "kkl_probe.exe") $pkg
@@ -37,7 +41,6 @@ foreach ($f in "README.md", "README.pl.md", "PID_znaczenia.md", "LICENSE", "dtc_
 # (all ~170 PIDs on the list would make one polling cycle take ~0.8 s).
 $env:PYTHONPATH = $src
 python -c @"
-import sys
 from kkl import piddefs
 defs, problems, keep, _ = piddefs.load_defs(r'$src\pid_definicje.csv')
 basic = {0x07, 0x10, 0x11, 0x14, 0x15, 0x17, 0x21, 0x24, 0x40, 0x45}
@@ -47,7 +50,14 @@ piddefs.save_defs(r'$pkg\pid_definitions.csv', defs, keep)
 "@
 if ($LASTEXITCODE) { throw "writing pid_definitions.csv failed" }
 
-$zip = Join-Path $work "mitsu-kkl-$Version-windows.zip"
+$zip = Join-Path $work "$name.zip"
 if (Test-Path $zip) { Remove-Item $zip -Force }
 Compress-Archive -Path (Join-Path $pkg "*") -DestinationPath $zip
-Write-Output "built: $zip"
+
+$out = Join-Path $src "dist"
+New-Item -ItemType Directory $out -Force | Out-Null
+if (Test-Path (Join-Path $out $name)) { Remove-Item (Join-Path $out $name) -Recurse -Force }
+Copy-Item $pkg $out -Recurse
+Copy-Item $zip $out -Force
+Write-Output "built: $(Join-Path $out "$name.zip")"
+Write-Output "exe:   $(Join-Path $out $name)"

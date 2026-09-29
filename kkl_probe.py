@@ -24,7 +24,7 @@ import time
 import traceback
 from pathlib import Path
 
-from kkl import proto
+from kkl import __version__, proto
 from kkl.interfaces import AUTO, cli_key, list_interfaces, open_interface
 from kkl.link import KLine, hires_timer, now
 from kkl.log import ATTEMPTS, RunLog
@@ -166,6 +166,9 @@ def print_table(results):
 # ------------------------------------------------------------------ commands --
 def cmd_info(args, kl, log, runner):
     from kkl import ftdi_d2xx
+    from kkl.update import check_latest
+    newer = check_latest()
+    print(f"mitsu-kkl {__version__}" + (f" - newer version {newer[0]} available: {newer[1]}" if newer else ""))
     for i in list_interfaces()[1:]:
         print(f"interface: {i.key:<14} {i.label}")
     if kl.dev.backend == "d2xx":
@@ -309,6 +312,7 @@ def cmd_report(args):
 
 def build_parser():
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
+    ap.add_argument("--version", action="version", version=f"mitsu-kkl {__version__}")
     ap.add_argument("--backend", choices=("auto", "d2xx", "serial", "sim"),
                     help="default auto = FTDI via D2XX, else the first FTDI/CH340/PL2303/CP210x COM port; "
                          "serial = any chip via --port (--port alone implies serial)")

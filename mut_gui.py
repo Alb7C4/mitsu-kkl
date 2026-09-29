@@ -26,10 +26,12 @@ import sys
 import threading
 import time
 import tkinter as tk
+import webbrowser
 from pathlib import Path
 from tkinter import filedialog, messagebox, simpledialog, ttk
 
-from kkl import dtcdefs, proto
+from kkl import __version__, dtcdefs, proto
+from kkl.update import check_latest
 from kkl.interfaces import AUTO, Iface, cli_key, list_interfaces, open_interface
 from kkl.link import KLine, hires_timer, now
 from kkl.profiles import load_profiles, save_profiles
@@ -193,7 +195,8 @@ class App:
         self.prof_var = tk.StringVar()
         self.profiles, self.prof_keep, self.prof_mtime = {}, [], None
         self._last_sort = 0.0
-        root.title("MUT-II live data: Eclipse 4G63")
+        self.check_updates = s.get("check_updates", True)
+        root.title(f"MUT-II live data: Eclipse 4G63 – mitsu-kkl {__version__}")
         root.geometry(s.get("geometry", "940x600"))
         self._build()
         self.refresh_ifaces(cli_iface or self.saved_iface)
@@ -207,11 +210,13 @@ class App:
             self.note.set(self.note.get() + f"  {PROFILES.name}: " + "; ".join(prof_problems[:3]))
         root.protocol("WM_DELETE_WINDOW", self.close)
         root.after(50, self._tick)
+        if self.check_updates:
+            threading.Thread(target=lambda: self.q.put(("update", check_latest())), daemon=True).start()
 
     # -- layout ----------------------------------------------------------------------
     def _build(self):
         pad = {"padx": 4, "pady": 3}
-        iff = ttk.Frame(self.root)
+        iff = self.first_bar = ttk.Frame(self.root)
         iff.pack(fill="x", **pad)
         ttk.Label(iff, text="Interface:").pack(side="left")
         self.cb_iface = ttk.Combobox(iff, textvariable=self.iface_var, state="readonly", width=52)
@@ -333,7 +338,7 @@ class App:
              "live_sort": self.live_sort.get(), "sort_col": self.sort_col, "sort_desc": self.sort_desc,
              # a simulator chosen on the command line must not become the default interface
              "iface": self.saved_iface if iface.startswith("sim:") else iface,
-             "profile": self.prof_var.get()}
+             "profile": self.prof_var.get(), "check_updates": self.check_updates}
         try:
             SETTINGS.write_text(json.dumps(s, indent=1), encoding="utf-8")
         except OSError:
@@ -1156,6 +1161,8 @@ class App:
                                       "COM port); after plugging in the cable click Refresh.")
                 elif kind == "stopped":
                     self._stopped()
+                elif kind == "update" and msg[1]:
+                    self._show_update(*msg[1])
         except queue.Empty:
             pass
         t = now()
@@ -1173,6 +1180,22 @@ class App:
             self.rec_file.flush()
             self.rec_label.set(f"Log: {self.rec_path.name}, {self.rec_rows} rows")
         self.root.after(50, self._tick)
+
+    def _show_update(self, tag, url):
+        """Bar above everything else; the user downloads and replaces the files."""
+        bar = tk.Frame(self.root, background="#fff3c4")
+        bar.pack(fill="x", before=self.first_bar)
+
+        def never():
+            self.check_updates = False
+            self._save_settings()
+            bar.destroy()
+
+        tk.Label(bar, text=f"A newer version is available: {tag} (you have {__version__}).",
+                 background="#fff3c4").pack(side="left", padx=6, pady=3)
+        ttk.Button(bar, text="Open download page", command=lambda: webbrowser.open(url)).pack(side="left", padx=2)
+        ttk.Button(bar, text="Later", command=bar.destroy).pack(side="left", padx=2)
+        ttk.Button(bar, text="Don't check again", command=never).pack(side="left", padx=2)
 
     def close(self):
         self._save_settings()

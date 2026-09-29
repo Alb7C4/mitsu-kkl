@@ -46,6 +46,11 @@ Settings, PID definitions and logs are kept next to the .exe.
 
 No car at hand? `mut_gui.exe --backend sim --sim mutlive --connect` runs a simulated ECU.
 
+**Updates:** on start `mut_gui` asks GitHub in the background whether a newer release exists and, if so,
+shows a bar with a link to the download page (download the zip and replace the files; your settings,
+definitions and logs stay). Nothing is shown when offline. "Don't check again" turns it off
+(`"check_updates": false` in `mut_gui.json`). `kkl_probe info` prints the version and the same hint.
+
 ## Run from source
 
 Tested with Python 3.14 on Windows 10.

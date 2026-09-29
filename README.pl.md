@@ -133,6 +133,11 @@ Interfejs programu jest po angielsku; poniżej nazwy przycisków tak, jak są w 
 - „Load…” / „Save as…” przełączają się na inny plik definicji; wybrany plik staje się bieżącym.
   Wczytuje też starsze listy `.txt` (jeden PID na linię).
 - Ok. 200 odczytów/s. Przy utracie sesji łączy się ponownie samo. Ustawienia zapisuje w `mut_gui.json`.
+- **Aktualizacje:** przy starcie program w tle pyta GitHub, czy jest nowsze wydanie. Jeśli jest, u góry
+  okna pojawia się pasek z przyciskiem „Open download page”. Pobierasz zip i podmieniasz pliki;
+  ustawienia, definicje i logi zostają. Bez internetu nic się nie pokazuje. „Don't check again”
+  wyłącza sprawdzanie (`"check_updates": false` w `mut_gui.json`). Wersja jest w tytule okna,
+  a `kkl_probe.py info` pokazuje ją razem z tą samą podpowiedzią (`--version` wypisuje samą wersję).
 
 ## Procedura w aucie
 
