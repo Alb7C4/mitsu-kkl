@@ -51,8 +51,9 @@ pasek z odnośnikiem do strony pobierania (pobierasz zip i podmieniasz pliki; us
 zostają). Bez internetu nic się nie pokazuje. „Don't check again” wyłącza sprawdzanie
 (`"check_updates": false` w `mut_gui.json`). `kkl_probe info` wypisuje wersję i tę samą podpowiedź.
 
-**Okno powitalne:** `mut_gui` przy każdym starcie pokazuje ten opis, po polsku, gdy Windows jest ustawiony
-na polski, w przeciwnym razie po angielsku (język przełącza się w oknie). „Nie pokazuj więcej” ukrywa je
+**Okno powitalne:** `mut_gui` przy każdym starcie pokazuje krótkie wprowadzenie prostym językiem
+(`welcome/pl.md`, `welcome/en.md`), po polsku, gdy Windows jest ustawiony na polski, w przeciwnym razie
+po angielsku (język przełącza się w oknie). „Nie pokazuj więcej” ukrywa je
 do następnej wersji; przycisk *About…* otwiera je w każdej chwili.
 
 ## Uruchomienie ze źródeł

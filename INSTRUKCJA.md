@@ -138,7 +138,8 @@ Interfejs programu jest po angielsku; poniżej nazwy przycisków tak, jak są w 
   ustawienia, definicje i logi zostają. Bez internetu nic się nie pokazuje. „Don't check again”
   wyłącza sprawdzanie (`"check_updates": false` w `mut_gui.json`). Wersja jest w tytule okna,
   a `kkl_probe.py info` pokazuje ją razem z tą samą podpowiedzią (`--version` wypisuje samą wersję).
-- **Okno powitalne:** przy każdym starcie pokazuje opis projektu (`README.pl.md` albo `README.md`), po polsku,
+- **Okno powitalne:** przy każdym starcie pokazuje krótkie wprowadzenie dla osób nietechnicznych
+  (`welcome/pl.md` albo `welcome/en.md`; szczegóły techniczne zostają w README), po polsku,
   gdy Windows jest ustawiony na polski, w przeciwnym razie po angielsku. Język przełącza się w oknie.
   Zaznaczenie „Nie pokazuj więcej” ukrywa okno do następnej wersji programu (zapis
   `"welcome_hidden_version"` w `mut_gui.json`). Przycisk „About…” otwiera je w każdej chwili.

@@ -51,8 +51,8 @@ shows a bar with a link to the download page (download the zip and replace the f
 definitions and logs stay). Nothing is shown when offline. "Don't check again" turns it off
 (`"check_updates": false` in `mut_gui.json`). `kkl_probe info` prints the version and the same hint.
 
-**Welcome window:** `mut_gui` shows this description on every start, in Polish when Windows is set to
-Polish and in English otherwise (switchable in the window). "Don't show again" hides it until the next
+**Welcome window:** `mut_gui` shows a short plain-language introduction on every start (`welcome/en.md`,
+`welcome/pl.md`), in Polish when Windows is set to Polish and in English otherwise (switchable in the window). "Don't show again" hides it until the next
 version; the *About…* button opens it any time.
 
 ## Run from source

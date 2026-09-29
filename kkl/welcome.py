@@ -1,5 +1,6 @@
-"""Welcome window: the project description (README.md / README.pl.md, the same text as on
-GitHub) rendered in a Tk Text widget. Polish when Windows is set to Polish, else English."""
+"""Welcome window: a short plain-language introduction (welcome/pl.md, welcome/en.md) rendered
+in a Tk Text widget. Polish when Windows is set to Polish, else English. The technical
+description stays in README.md on GitHub."""
 
 import ctypes
 import locale
@@ -12,7 +13,7 @@ from tkinter import ttk
 from .update import REPO
 
 REPO_URL = f"https://github.com/{REPO}"
-FILES = {"en": "README.md", "pl": "README.pl.md"}
+FILES = {"en": "welcome/en.md", "pl": "welcome/pl.md"}
 TEXTS = {
     "en": {"title": "Welcome to mitsu-kkl {v}", "hide": "Don't show again (until the next version)",
            "close": "Close", "missing": "Description file {f} not found."},
@@ -232,10 +233,6 @@ class WelcomeWindow:
             mark = "h-" + url[1:].lower()
             if mark in self.text.mark_names():
                 self.text.yview(mark)
-            return
-        name = url.rsplit("/", 1)[-1]
-        if not url.startswith(("http://", "https://")) and name in FILES.values():
-            self.set_lang("pl" if name == FILES["pl"] else "en")
             return
         if not url.startswith(("http://", "https://")):
             url = f"{REPO_URL}/releases" if url.rstrip("/").endswith("releases") else f"{REPO_URL}/blob/main/{url}"

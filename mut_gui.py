@@ -1191,7 +1191,7 @@ class App:
         if self.welcome and self.welcome.exists():
             self.welcome.win.lift()
             return
-        # README files are bundled into the .exe (PyInstaller --add-data); from source they sit in HERE
+        # welcome/*.md are bundled into the .exe (PyInstaller --add-data); from source they sit in HERE
         dirs = [Path(getattr(sys, "_MEIPASS", HERE)), HERE]
         self.welcome = WelcomeWindow(self.root, __version__, dirs, system_language(),
                                      self.welcome_hidden == __version__, self._welcome_closed)

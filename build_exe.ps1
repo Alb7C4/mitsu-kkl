@@ -17,8 +17,8 @@ $dist = Join-Path $work "dist"
 python -m pip install --quiet --upgrade pyinstaller pyserial
 if ($LASTEXITCODE) { throw "pip install failed" }
 
-# The GUI carries both READMEs inside the .exe for its welcome window.
-$readmes = @("--add-data", "$src\README.md;.", "--add-data", "$src\README.pl.md;.")
+# The GUI carries its welcome texts (welcome\pl.md, welcome\en.md) inside the .exe.
+$readmes = @("--add-data", "$src\welcome;welcome")
 $apps = @(
     @{ Name = "mut_gui";   Mode = "--windowed"; Extra = $readmes },   # GUI, no console window
     @{ Name = "kkl_probe"; Mode = "--console";  Extra = @() }         # command-line probe
