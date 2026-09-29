@@ -23,7 +23,9 @@ Both tools are **read-only by design** (see [Safety](#safety)).
 
 ## Hardware
 
-- **A "dumb" KKL cable**: USB-UART chip + K-line transceiver, sold as "VAG KKL 409.1".
+- **The cheapest VAG KKL cable** (sold as "VAG KKL 409.1" / "VAG-COM 409.1 KKL"): just a USB-UART chip and a K-line transceiver, nothing else.
+  Do **not** buy a "HEX" / "HEX-CAN" / VCDS clone, a K+CAN cable, or any interface with its own microcontroller or firmware:
+  those talk their own protocol to the PC and cannot be driven bit by bit, so the MUT-II init at 15625 baud is impossible.
   - **FTDI FT232** works best (used through the FTDI D2XX driver; the only mode with bit-bang init and line error flags).
   - CH340, PL2303 or CP210x work through their COM port **if the chip can run 15625 baud and send a break**. Many old or fake PL2303 chips only do standard baud rates.
   - **ELM327 interfaces do not work**: they cannot do the MUT-II init at 15625 baud.

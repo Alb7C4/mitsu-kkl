@@ -9,7 +9,14 @@ jest w [mut2-ftdi-kkl-handoff.md](mut2-ftdi-kkl-handoff.md).
 
 ## Sprzęt (stan na 2026-09-27)
 
-- Kabel: FT232BM/BL, **bez EEPROM** (domyślne 0403:6001, opis "USB <-> Serial"), sterownik FTDI
+- **Potrzebny jest najtańszy kabel VAG KKL** (sprzedawany jako „VAG KKL 409.1” / „VAG-COM 409.1 KKL”):
+  sam układ USB-UART i transceiver linii K, nic więcej. **Nie** kupuj kabli „HEX” / „HEX-CAN” / klonów
+  VCDS, kabli K+CAN ani żadnego interfejsu z własnym mikrokontrolerem i firmware: rozmawiają one
+  z komputerem własnym protokołem i nie da się nimi sterować linią K bit po bicie, więc inicjalizacja
+  MUT-II przy 15625 bodach jest niemożliwa. Nie działają też interfejsy ELM327.
+  - Najlepszy jest chip **FTDI FT232** (sterownik D2XX). CH340, PL2303 i CP210x działają przez port COM,
+    jeśli chip obsługuje 15625 bodów i break.
+- Kabel użyty w testach: FT232BM/BL, **bez EEPROM** (domyślne 0403:6001, opis "USB <-> Serial"), sterownik FTDI
   2.12.36, D2XX dostępne, COM1, latency 1 ms.
 - `selftest` bez auta daje `NO_ECHO`, czyli transceiver nie ma 12 V z pinu 16. To normalne,
   dopóki kabel nie jest wpięty w gniazdo OBD.
