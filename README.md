@@ -2,7 +2,7 @@
 
 **MUT-II diagnostics for 1990s Mitsubishi engine ECUs over a cheap VAG "KKL" USB cable.**
 
-*[Polski](README.pl.md) — full manual in Polish.*
+*[Polski](README.pl.md) · full manual in Polish: [INSTRUKCJA.md](INSTRUKCJA.md)*
 
 Many late-90s Mitsubishi cars only talk Mitsubishi's own MUT-II protocol: 5-baud init to
 address 0x00, then 15625 baud, and only while OBD pin 1 is grounded. Most generic scan tools
@@ -50,6 +50,10 @@ No car at hand? `mut_gui.exe --backend sim --sim mutlive --connect` runs a simul
 shows a bar with a link to the download page (download the zip and replace the files; your settings,
 definitions and logs stay). Nothing is shown when offline. "Don't check again" turns it off
 (`"check_updates": false` in `mut_gui.json`). `kkl_probe info` prints the version and the same hint.
+
+**Welcome window:** `mut_gui` shows this description on every start, in Polish when Windows is set to
+Polish and in English otherwise (switchable in the window). "Don't show again" hides it until the next
+version; the *About…* button opens it any time.
 
 ## Run from source
 
@@ -105,7 +109,8 @@ Use at your own risk. This project is not affiliated with Mitsubishi Motors.
 
 ## More documentation
 
-- [README.pl.md](README.pl.md): full manual in Polish (every GUI function, all commands, test procedure)
+- [README.pl.md](README.pl.md): this description in Polish
+- [INSTRUKCJA.md](INSTRUKCJA.md): full manual in Polish (every GUI function, all commands, test procedure)
 - [PID_znaczenia.md](PID_znaczenia.md): PID meanings found on the test car (Polish)
 - [mut2-ftdi-kkl-handoff.md](mut2-ftdi-kkl-handoff.md): background notes on MUT-II and the FTDI cable
 

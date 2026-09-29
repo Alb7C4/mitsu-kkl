@@ -17,12 +17,15 @@ $dist = Join-Path $work "dist"
 python -m pip install --quiet --upgrade pyinstaller pyserial
 if ($LASTEXITCODE) { throw "pip install failed" }
 
+# The GUI carries both READMEs inside the .exe for its welcome window.
+$readmes = @("--add-data", "$src\README.md;.", "--add-data", "$src\README.pl.md;.")
 $apps = @(
-    @{ Name = "mut_gui";   Mode = "--windowed" },   # GUI, no console window
-    @{ Name = "kkl_probe"; Mode = "--console" }     # command-line probe
+    @{ Name = "mut_gui";   Mode = "--windowed"; Extra = $readmes },   # GUI, no console window
+    @{ Name = "kkl_probe"; Mode = "--console";  Extra = @() }         # command-line probe
 )
 foreach ($app in $apps) {
-    python -m PyInstaller --noconfirm --clean --onefile $app.Mode --name $app.Name `
+    $extra = $app.Extra
+    python -m PyInstaller --noconfirm --clean --onefile $app.Mode --name $app.Name @extra `
         --distpath $dist --workpath (Join-Path $work "build") --specpath $work `
         (Join-Path $src "$($app.Name).py")
     if ($LASTEXITCODE) { throw "PyInstaller failed for $($app.Name)" }
@@ -33,7 +36,7 @@ $pkg = Join-Path $work $name
 if (Test-Path $pkg) { Remove-Item $pkg -Recurse -Force }
 New-Item -ItemType Directory $pkg | Out-Null
 Copy-Item (Join-Path $dist "mut_gui.exe"), (Join-Path $dist "kkl_probe.exe") $pkg
-foreach ($f in "README.md", "README.pl.md", "PID_znaczenia.md", "LICENSE", "dtc_definitions.csv") {
+foreach ($f in "README.md", "README.pl.md", "INSTRUKCJA.md", "PID_znaczenia.md", "LICENSE", "dtc_definitions.csv") {
     Copy-Item (Join-Path $src $f) $pkg
 }
 

@@ -32,6 +32,7 @@ from tkinter import filedialog, messagebox, simpledialog, ttk
 
 from kkl import __version__, dtcdefs, proto
 from kkl.update import check_latest
+from kkl.welcome import WelcomeWindow, system_language
 from kkl.interfaces import AUTO, Iface, cli_key, list_interfaces, open_interface
 from kkl.link import KLine, hires_timer, now
 from kkl.profiles import load_profiles, save_profiles
@@ -196,6 +197,7 @@ class App:
         self.profiles, self.prof_keep, self.prof_mtime = {}, [], None
         self._last_sort = 0.0
         self.check_updates = s.get("check_updates", True)
+        self.welcome, self.welcome_hidden = None, s.get("welcome_hidden_version", "")
         root.title(f"MUT-II live data: Eclipse 4G63 – mitsu-kkl {__version__}")
         root.geometry(s.get("geometry", "940x600"))
         self._build()
@@ -212,6 +214,8 @@ class App:
         root.after(50, self._tick)
         if self.check_updates:
             threading.Thread(target=lambda: self.q.put(("update", check_latest())), daemon=True).start()
+        if self.welcome_hidden != __version__:  # "don't show again" only holds for the version it was ticked in
+            root.after(300, self.show_welcome)
 
     # -- layout ----------------------------------------------------------------------
     def _build(self):
@@ -295,6 +299,7 @@ class App:
         ttk.Button(fil, text="Edit in Notepad", command=self.edit_file).pack(side="left", padx=2)
         ttk.Button(fil, text="Edit fault code definitions",
                    command=lambda: self.edit_file(DTC_DEFS)).pack(side="left", padx=(12, 2))
+        ttk.Button(fil, text="About…", command=self.show_welcome).pack(side="right", padx=2)
         ttk.Button(fil, text="Logs folder", command=self.open_logs).pack(side="right", padx=2)
         ttk.Label(fil, textvariable=self.rec_label, foreground="#8c1f1f").pack(side="right", padx=6)
 
@@ -338,7 +343,8 @@ class App:
              "live_sort": self.live_sort.get(), "sort_col": self.sort_col, "sort_desc": self.sort_desc,
              # a simulator chosen on the command line must not become the default interface
              "iface": self.saved_iface if iface.startswith("sim:") else iface,
-             "profile": self.prof_var.get(), "check_updates": self.check_updates}
+             "profile": self.prof_var.get(), "check_updates": self.check_updates,
+             "welcome_hidden_version": self.welcome_hidden}
         try:
             SETTINGS.write_text(json.dumps(s, indent=1), encoding="utf-8")
         except OSError:
@@ -1180,6 +1186,19 @@ class App:
             self.rec_file.flush()
             self.rec_label.set(f"Log: {self.rec_path.name}, {self.rec_rows} rows")
         self.root.after(50, self._tick)
+
+    def show_welcome(self):
+        if self.welcome and self.welcome.exists():
+            self.welcome.win.lift()
+            return
+        # README files are bundled into the .exe (PyInstaller --add-data); from source they sit in HERE
+        dirs = [Path(getattr(sys, "_MEIPASS", HERE)), HERE]
+        self.welcome = WelcomeWindow(self.root, __version__, dirs, system_language(),
+                                     self.welcome_hidden == __version__, self._welcome_closed)
+
+    def _welcome_closed(self, hide):
+        self.welcome_hidden = __version__ if hide else ""
+        self._save_settings()
 
     def _show_update(self, tag, url):
         """Bar above everything else; the user downloads and replaces the files."""
