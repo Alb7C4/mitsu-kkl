@@ -85,7 +85,7 @@ Z `--lan` stronę może otworzyć każdy w tej samej sieci: z auta może tylko c
 nazwy PID-ów. Strona (`web/`) rozmawia z serwerem wyłącznie przez [web/API.md](web/API.md), dzięki
 czemu **firmware na Raspberry Pi Pico 2 W** z folderu [pico/](pico/README.md) podaje tę samą stronę przez
 własną sieć Wi-Fi, z transceiverem linii K zamiast kabla USB (MicroPython; przetestowany na PC
-z symulatorem sterownika, jeszcze nie na urządzeniu).
+z symulatorem sterownika, jeszcze nie na urządzeniu). Schemat i lista części: [pico/hw](pico/hw/README.md).
 
 ## kkl_probe w skrócie
 

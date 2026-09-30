@@ -84,7 +84,7 @@ anyone on the same network can open the page: it can only read from the car, but
 The page (`web/`) talks to its server only through [web/API.md](web/API.md), so the
 **Raspberry Pi Pico 2 W firmware** in [pico/](pico/README.md) serves the same page from its own
 Wi-Fi network, with a K-line transceiver instead of a USB cable (MicroPython; tested on a PC with the
-ECU simulator, not yet on the device).
+ECU simulator, not yet on the device). Schematic and parts list: [pico/hw](pico/hw/README.md).
 
 ## kkl_probe quick reference
 

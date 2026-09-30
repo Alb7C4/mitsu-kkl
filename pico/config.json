@@ -5,7 +5,7 @@
   "uart": 0,
   "tx_gpio": 0,
   "rx_gpio": 1,
-  "invert_tx": false,
+  "invert_tx": true,
   "invert_rx": false,
   "pin1_gpio": 2,
   "pin1_active_high": true,

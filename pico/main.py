@@ -14,7 +14,7 @@ from kline import KLine
 
 DEFAULTS = {
     "ssid": "mitsu-kkl", "password": "mitsukkl", "country": "PL",
-    "uart": 0, "tx_gpio": 0, "rx_gpio": 1, "invert_tx": False, "invert_rx": False,
+    "uart": 0, "tx_gpio": 0, "rx_gpio": 1, "invert_tx": True, "invert_rx": False,  # hw/schemat.svg
     "pin1_gpio": 2, "pin1_active_high": True, "http_port": 80, "auto_connect": True,
 }
 

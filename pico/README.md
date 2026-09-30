@@ -6,8 +6,8 @@ Telefon łączy się z siecią Pico i otwiera `http://192.168.4.1/`. Z autem Pic
 i tylko odczytuje dane: zapytania spoza 00–BF i FD–FF są odrzucane w firmware.
 
 > **Stan:** firmware jest przetestowany na PC z symulatorem sterownika (`pc_sim/run.py`), a nie
-> jeszcze na prawdziwym Pico i w aucie. Schemat układu jest w przygotowaniu (punkt 3); poniżej tylko
-> połączenia z pinami Pico.
+> jeszcze na prawdziwym Pico i w aucie. **Schemat, lista części i uruchomienie układu:
+> [hw/README.md](hw/README.md).**
 
 ## Pliki
 
@@ -19,6 +19,8 @@ i tylko odczytuje dane: zapytania spoza 00–BF i FD–FF są odrzucane w firmwa
 | `httpd.py` | serwer WWW: strona z `web/` i API z [../web/API.md](../web/API.md) |
 | `config.json` | nazwa i hasło sieci, piny, port, automatyczne łączenie |
 | `deploy.py` | wgrywa wszystko na Pico (`mpremote`) |
+| `benchtest.py` | test zmontowanego układu bez auta: `mpremote run pico/benchtest.py` |
+| `hw/` | schemat (`schemat.svg`), lista części, uruchomienie |
 | `pc_sim/` | uruchomienie firmware na PC z symulatorem, do testów bez sprzętu |
 
 ## Wgranie
@@ -42,31 +44,20 @@ i tylko odczytuje dane: zapytania spoza 00–BF i FD–FF są odrzucane w firmwa
 | `ssid`, `password` | `mitsu-kkl`, `mitsukkl` | sieć Wi-Fi Pico; **zmień hasło**, min. 8 znaków (krótsze = sieć otwarta) |
 | `country` | `PL` | kraj dla Wi-Fi |
 | `uart`, `tx_gpio`, `rx_gpio` | `0`, `0`, `1` | UART i piny do transceivera linii K |
-| `invert_tx`, `invert_rx` | `false` | odwrócenie sygnałów, jeśli układ je odwraca (np. prosty stopień tranzystorowy) |
+| `invert_tx`, `invert_rx` | `true`, `false` | odwrócenie sygnałów; `true` dla TX pasuje do [schematu](hw/README.md) (tranzystor odwraca), dla L9637D oba `false` |
 | `pin1_gpio`, `pin1_active_high` | `2`, `true` | pin sterujący tranzystorem, który zwiera pin 1 OBD do masy (`null` = brak) |
 | `http_port` | `80` | port strony |
 | `auto_connect` | `true` | łączy się z autem od razu po włączeniu |
 
 Zmiana: `mpremote fs cp config.json :config.json`, albo edycja pliku w Thonny, potem restart Pico.
 
-## Połączenia z Pico 2 W
+## Sprzęt
 
-| Pico | numer nóżki | dokąd |
-|---|---|---|
-| GP0 (UART0 TX) | 1 | wejście TX transceivera linii K |
-| GP1 (UART0 RX) | 2 | wyjście RX transceivera (**maks. 3,3 V**) |
-| GP2 | 4 | baza/bramka tranzystora zwierającego pin 1 OBD do masy |
-| GND | 3, 38… | masa transceivera i gniazda OBD (piny 4 i 5) |
-| VSYS | 39 | 5 V z przetwornicy zasilanej z pinu 16 OBD (+12 V) |
+Schemat, lista części, połączenia z pinami Pico i uruchomienie krok po kroku: **[hw/README.md](hw/README.md)**.
+W skrócie: GP0 → tranzystor ściągający linię K (OBD 7), GP1 ← komparator LM393 z linii K (maks. 3,3 V),
+GP2 → tranzystor zwierający pin 1 do masy, VSYS ← przetwornica 12 → 5 V z pinu 16.
 
-Najważniejsze pułapki (szczegóły w schemacie):
-
-- **Nie używaj transceivera LIN** (MCP2003B, TJA1021…): zwykle zwalnia linię, gdy TX jest nisko dłużej
-  niż kilkadziesiąt ms, a inicjalizacja adresu 0x00 trzyma linię nisko przez 1,8 s. Pasuje transceiver
-  ISO 9141 (np. L9637D) albo układ tranzystorowy z rezystorem ok. 510 Ω do +12 V.
-- **Piny Pico nie znoszą 5 V ani 12 V.** Wyjście RX transceivera musi dawać najwyżej 3,3 V.
-- **Zasilanie z auta skacze** (rozruch, ładowanie): przetwornica 12 → 5 V z diodą przeciw odwrotnej
-  polaryzacji i diodą TVS.
+![Schemat](hw/schemat.svg)
 
 ## Użycie
 
