@@ -82,8 +82,10 @@ python mut_web.py --backend sim --sim mutlive --connect  # demo bez auta
 Lista PID-ów z nazwami i przelicznikami (ten sam plik definicji co w `mut_gui`), podświetlanie zmian,
 min/max, kody usterek, nagrywanie do pliku CSV pobieranego przez przeglądarkę, polski/angielski.
 Z `--lan` stronę może otworzyć każdy w tej samej sieci: z auta może tylko czytać, ale może zmieniać
-nazwy PID-ów. Strona (`web/`) rozmawia z serwerem wyłącznie przez [web/API.md](web/API.md), co jest
-podstawą wersji na Raspberry Pi Pico W, które poda tę samą stronę przez własne Wi-Fi.
+nazwy PID-ów. Strona (`web/`) rozmawia z serwerem wyłącznie przez [web/API.md](web/API.md), dzięki
+czemu **firmware na Raspberry Pi Pico 2 W** z folderu [pico/](pico/README.md) podaje tę samą stronę przez
+własną sieć Wi-Fi, z transceiverem linii K zamiast kabla USB (MicroPython; przetestowany na PC
+z symulatorem sterownika, jeszcze nie na urządzeniu).
 
 ## kkl_probe w skrócie
 

@@ -81,8 +81,10 @@ python mut_web.py --backend sim --sim mutlive --connect  # demo without a car
 PID list with names and conversions (the same definitions file as `mut_gui`), change highlighting,
 min/max, fault codes, recording to a CSV file downloaded by the browser, Polish/English. With `--lan`
 anyone on the same network can open the page: it can only read from the car, but it can rename PIDs.
-The page (`web/`) talks to its server only through [web/API.md](web/API.md), the groundwork for a
-Raspberry Pi Pico W version that serves the same page from its own Wi-Fi.
+The page (`web/`) talks to its server only through [web/API.md](web/API.md), so the
+**Raspberry Pi Pico 2 W firmware** in [pico/](pico/README.md) serves the same page from its own
+Wi-Fi network, with a K-line transceiver instead of a USB cable (MicroPython; tested on a PC with the
+ECU simulator, not yet on the device).
 
 ## kkl_probe quick reference
 

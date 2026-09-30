@@ -349,9 +349,9 @@ function handle(msg) {
       S.status = msg;
       renderStatus();
       break;
-    case "values":
-      for (const [p, v] of Object.entries(msg.v)) onValue(p, v, msg.t || now);
-      if (S.rec) recordRow(msg.t || now);
+    case "values":  // the browser's clock: the Pico has none
+      for (const [p, v] of Object.entries(msg.v)) onValue(p, v, now);
+      if (S.rec) recordRow(now);
       break;
     case "rate":
       $("rate").textContent = t("reads", { r: Math.round(msg.reads) });

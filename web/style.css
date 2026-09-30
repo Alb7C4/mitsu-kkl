@@ -11,6 +11,7 @@
   }
 }
 * { box-sizing: border-box; }
+[hidden] { display: none !important; }
 body { margin: 0; background: var(--bg); color: var(--text);
        font: 14px/1.4 "Segoe UI", system-ui, -apple-system, Roboto, sans-serif; }
 header, .bar { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px;

@@ -1,0 +1,14 @@
+{
+  "ssid": "mitsu-kkl",
+  "password": "mitsukkl",
+  "country": "PL",
+  "uart": 0,
+  "tx_gpio": 0,
+  "rx_gpio": 1,
+  "invert_tx": false,
+  "invert_rx": false,
+  "pin1_gpio": 2,
+  "pin1_active_high": true,
+  "http_port": 80,
+  "auto_connect": true
+}

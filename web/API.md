@@ -32,7 +32,7 @@ One JSON object per `data:` line. A new client first gets `state`.
 |---|---|---|
 | `state` | `status` (as in the `status` event), `pids`, `values` (`{"07": 135 \| null}`), `rate` | on subscribe |
 | `status` | `code`, `detail`, `ecu_id`, `iface` | connection state changes |
-| `values` | `t` (ms since epoch), `v` (`{"07": 135, "21": null}`) | every ~100 ms, only PIDs read since the last batch; `null` = no answer |
+| `values` | `v` (`{"07": 135, "21": null}`), optional `t` (ms since epoch; the Pico has no clock, so the page uses its own time) | every ~100 ms, only PIDs read since the last batch; `null` = no answer |
 | `rate` | `reads` (per s), `cycle` (s per pass) | once a second while connected |
 | `pids` | `pids` | the polled list changed |
 | `defs` | – | definitions changed; clients reload `GET /api/defs` |
