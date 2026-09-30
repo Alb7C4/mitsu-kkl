@@ -144,6 +144,39 @@ Interfejs programu jest po angielsku; poniżej nazwy przycisków tak, jak są w 
   Zaznaczenie „Nie pokazuj więcej” ukrywa okno do następnej wersji programu (zapis
   `"welcome_hidden_version"` w `mut_gui.json`). Przycisk „About…” otwiera je w każdej chwili.
 
+## Strona WWW (`mut_web.py`)
+
+Te same odczyty na żywo co w GUI, ale w przeglądarce, także na telefonie.
+
+```
+python mut_web.py                                        # kabel wybrany automatycznie, otwiera przeglądarkę
+python mut_web.py --lan                                  # dostępna też z innych urządzeń w sieci (adres na starcie)
+python mut_web.py --backend sim --sim mutlive --connect  # demo bez auta
+```
+
+Opcje: `--backend auto|d2xx|serial|sim`, `--port COMx` (kabel przez port COM), `--connect` (łączy od razu),
+`--http-port 8080`, `--lan`, `--no-browser`, `--defs plik.csv` (inny plik definicji, np. do testów).
+
+- **Kabel** i **Połącz/Rozłącz** w nagłówku. Status mówi, co się dzieje, np. „Sterownik nie odpowiada…
+  Pin 1 na masie? Zapłon włączony?”.
+- **PID-y**: pole z zakresami (`07,14,20-2F`) i Enter albo „Pokaż”; „PID-y z nazwą”, „Wszystkie 00–BF”.
+  Lista zapisuje się jako „na liście” w pliku definicji, wspólnym z `mut_gui`.
+- **Kody usterek**: widok 40/41 (aktywne) i 45/46 (zapamiętane) z opisami; „Powrót do odczytów”
+  przywraca poprzednią listę.
+- **Nazwa i przelicznik**: dwuklik na wierszu (na telefonie przytrzymanie). Podgląd przeliczenia dla
+  bieżącej wartości, błędne wyrażenie nie da się zapisać. Zmiany widzi od razu `mut_gui` i odwrotnie.
+- **HEX/DEC**, **podświetlanie** zmian o ≥ N jednostek przez zadany czas, **min/max**, liczba podświetleń,
+  czas ostatniej zmiany, sortowanie po kliknięciu nagłówka, „Usuń niezmienne”, „Zeruj min/max”.
+- **● Nagrywaj** zbiera odczyty w przeglądarce (ok. 10 wierszy/s) i po zatrzymaniu pobiera plik
+  `<czas>_readings.csv` (przecinki, kropka dziesiętna, liczby bez jednostek; jednostki są w nagłówkach).
+  Zmiana listy PID-ów kończy nagranie i zapisuje plik.
+- **PL/EN** w prawym górnym rogu; domyślnie język przeglądarki.
+- Kilka przeglądarek naraz widzi to samo; lista PID-ów jest wspólna.
+- Z `--lan` stronę może otworzyć każdy w tej samej sieci. Z auta może tylko czytać, ale może zmieniać
+  nazwy PID-ów. Zmiany wymagają zapytań JSON, więc obca strona otwarta w przeglądarce nie może nimi sterować.
+- Strona (`web/`) rozmawia z serwerem tylko przez API opisane w [web/API.md](web/API.md). Tę samą stronę
+  będzie mogło serwować Raspberry Pi Pico W.
+
 ## Procedura w aucie
 
 ```

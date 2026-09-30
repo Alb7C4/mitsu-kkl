@@ -2,6 +2,7 @@
 logs/
 mut_gui.json
 *.tmp
+.claude/launch.json
 
 # Python / build output
 __pycache__/

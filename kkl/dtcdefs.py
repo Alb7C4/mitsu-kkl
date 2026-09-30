@@ -41,6 +41,11 @@ def label(code):
     return f"{code} {name}" if name else str(code)
 
 
+def table():
+    """[(bit, code, description), ...] for the bits defined in the loaded file."""
+    return [(bit, code, _names.get(code, "")) for bit, code in sorted(_bits.items())]
+
+
 def decode(value, base=0):
     """Fault byte -> ['13 intake air temperature sensor', ...]; base 0 = first byte, 8 = second."""
     out = []

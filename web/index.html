@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>mitsu-kkl live data</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<header>
+  <div class="brand">mitsu-kkl <span id="ver" class="muted"></span></div>
+  <label id="ifaceBox" class="field" hidden><span data-i18n="cable"></span>
+    <select id="iface"></select>
+  </label>
+  <button id="btnConn" class="primary"></button>
+  <span id="status" class="status"></span>
+  <span id="rate" class="muted"></span>
+  <select id="lang" aria-label="language">
+    <option value="pl">PL</option>
+    <option value="en">EN</option>
+  </select>
+</header>
+
+<section class="bar">
+  <label class="field grow"><span data-i18n="pids"></span>
+    <input id="pidText" autocomplete="off" spellcheck="false">
+  </label>
+  <button id="btnApply" data-i18n="show"></button>
+  <button id="btnNamed" data-i18n="named"></button>
+  <button id="btnAll" data-i18n="all"></button>
+  <button id="btnFault"></button>
+</section>
+
+<section class="bar">
+  <span class="field"><span data-i18n="format"></span>
+    <label class="radio"><input type="radio" name="fmt" value="HEX" checked> HEX</label>
+    <label class="radio"><input type="radio" name="fmt" value="DEC"> DEC</label>
+  </span>
+  <label class="field"><span data-i18n="hlChange"></span>
+    <input id="threshold" type="number" min="1" max="255" value="1" class="num">
+    <span data-i18n="hlFor"></span>
+    <input id="hlSecs" type="number" min="0.5" max="60" step="0.5" value="3" class="num"> s
+  </label>
+  <button id="btnUnchanged" data-i18n="removeUnchanged"></button>
+  <button id="btnReset" data-i18n="resetMinMax"></button>
+  <button id="btnRec" class="rec"></button>
+  <span id="recInfo" class="muted"></span>
+</section>
+
+<main>
+  <table id="tbl">
+    <thead>
+      <tr>
+        <th data-k="pid">PID</th>
+        <th data-k="name" data-i18n="colName"></th>
+        <th data-k="value" data-i18n="colValue"></th>
+        <th data-k="conv" data-i18n="colConv"></th>
+        <th data-k="min">Min</th>
+        <th data-k="max">Max</th>
+        <th data-k="hl" data-i18n="colHl"></th>
+        <th data-k="last" data-i18n="colLast"></th>
+      </tr>
+    </thead>
+    <tbody></tbody>
+  </table>
+</main>
+
+<footer id="note" class="muted"></footer>
+
+<dialog id="dlgEdit">
+  <form method="dialog" id="formEdit">
+    <h3 id="editTitle"></h3>
+    <label><span data-i18n="name"></span><input id="edName" autocomplete="off"></label>
+    <label><span data-i18n="conversion"></span><input id="edConv" autocomplete="off" spellcheck="false"></label>
+    <label><span data-i18n="unit"></span><input id="edUnit" autocomplete="off"></label>
+    <p class="muted small" data-i18n="convHelp"></p>
+    <p id="edPreview" class="preview"></p>
+    <p id="edError" class="error"></p>
+    <div class="buttons">
+      <button value="cancel" data-i18n="cancel"></button>
+      <button id="edSave" value="save" class="primary" data-i18n="save"></button>
+    </div>
+  </form>
+</dialog>
+
+<script src="app.js"></script>
+</body>
+</html>

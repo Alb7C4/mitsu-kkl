@@ -68,6 +68,22 @@ python kkl_probe.py selftest
 
 `build_exe.ps1` builds the two .exe files and the release zip with PyInstaller.
 
+## Web page (browser, phone)
+
+`mut_web.py` shows the same live data as a web page, e.g. on a phone in the car:
+
+```
+python mut_web.py                                        # opens the browser at http://127.0.0.1:8080/
+python mut_web.py --lan                                  # also reachable from a phone on the same Wi-Fi
+python mut_web.py --backend sim --sim mutlive --connect  # demo without a car
+```
+
+PID list with names and conversions (the same definitions file as `mut_gui`), change highlighting,
+min/max, fault codes, recording to a CSV file downloaded by the browser, Polish/English. With `--lan`
+anyone on the same network can open the page: it can only read from the car, but it can rename PIDs.
+The page (`web/`) talks to its server only through [web/API.md](web/API.md), the groundwork for a
+Raspberry Pi Pico W version that serves the same page from its own Wi-Fi.
+
 ## kkl_probe quick reference
 
 ```
