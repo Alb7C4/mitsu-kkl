@@ -1,8 +1,10 @@
 #!/usr/bin/env python3
-"""MUT-II live viewer for the engine ECU (5-baud 0x00 @ 15625) with change highlighting.
+"""MUT-II live viewer for the engine ECU with change highlighting. ECU init: MUT-II 0x00 @ 15625
+(EU cars, Evo), OBD-II 0x33 @ 10400 (US cars, like EvoScan's DSM mode) or both in turn (Auto).
 
   pythonw mut_gui.py --connect                             # interface picked in the window
   pythonw mut_gui.py --port COM5                           # override: any chip via its COM port
+  pythonw mut_gui.py --init mut                            # override the init picked in the window
   python mut_gui.py --backend sim --sim mutlive --connect  # offline demo
 
 The watched PIDs with their names and optional conversions live in a definitions file
@@ -49,6 +51,9 @@ FIRST_LIST = "07,14,15,17,21,3A,40,45"
 DTC_LIST = (0x40, 0x41, 0x45, 0x46)
 BTN_LIVE, BTN_BACK = "Show selected live Data PIDs", "Back to Live Data PID"
 FILETYPES = [("PID definitions", "*.csv"), ("PID list", "*.txt"), ("All files", "*.*")]
+INIT_CHOICES = (("auto", "Auto: 0x00, then 0x33"),
+                ("mut", "MUT-II 0x00 (EU cars, Evo)"),
+                ("obd", "OBD-II 0x33 (US cars, EvoScan DSM)"))
 CONV_HELP = ("Expression in x (raw byte 0–255), e.g. x*0.0733 · x*31.25 · x-40 · (x>>4)&15 · "
              "round(x*0.49, 1). Keywords: dtc, dtc2 (fault code bits), bin (binary). "
              "Empty = no conversion.")
@@ -68,9 +73,11 @@ class NullLog:
 class Poller(threading.Thread):
     """Owns the interface: connects, polls the PID list in a loop, reconnects."""
 
-    def __init__(self, open_dev, pids, out):
+    def __init__(self, open_dev, pids, out, init_mode="auto"):
         super().__init__(daemon=True)
         self.open_dev, self.out = open_dev, out
+        self.init_mode = init_mode if init_mode in proto.INIT_MODES else "auto"
+        self.last_good = None  # in auto mode the next connect starts with the method that worked
         self.stop_ev = threading.Event()
         self.lock = threading.Lock()
         self._pids = list(pids)
@@ -94,14 +101,25 @@ class Poller(threading.Thread):
         hires_timer(True)
         try:
             kl.setup(15625, 1)
+            tries = 0
             while not self.stop_ev.is_set():
-                self._status("Connecting (5-baud 0x00 @ 15625)...")
-                res = proto.mut(kl, NullLog(), addr=0x00, baud=15625, queries=proto.MUT_ID_QUERIES)
+                order = proto.init_order(self.init_mode, self.last_good)
+                method = order[tries % len(order)]
+                label = proto.INIT_METHODS[method]["label"]
+                self._status(f"Connecting ({label})...")
+                res = proto.connect(kl, NullLog(), method)
+                tries += 1
                 if res["outcome"] != "DATA":
-                    self._status(f"ECU not responding ({res['outcome']}), retrying in 3 s. Pin 1 grounded? Ignition on?")
-                    self.stop_ev.wait(3.0)
+                    if tries % len(order):  # auto: the other init follows at once
+                        self._status(f"No answer to {label}, trying the other init...")
+                        self.stop_ev.wait(0.3)
+                    else:
+                        self._status(f"ECU not responding ({res['outcome']}), retrying in 3 s. "
+                                     "Pin 1 grounded? Ignition on?")
+                        self.stop_ev.wait(3.0)
                     continue
-                self.out.put(("connected", "".join(q["resp"] for q in res["queries"])))
+                self.last_good, tries = method, 0
+                self.out.put(("connected", "".join(q["resp"] for q in res["queries"]), label))
                 self._poll(kl)
                 if not self.stop_ev.is_set():
                     self._status("Session lost, reconnecting in 2 s...")
@@ -161,7 +179,7 @@ class App:
             ("phys", "Converted", 130), ("min", "Min", 55), ("max", "Max", 55),
             ("changes", "Highlights", 85), ("last", "Last change", 110))
 
-    def __init__(self, root, cli_iface=None):
+    def __init__(self, root, cli_iface=None, cli_init=None):
         self.root = root
         self.q = queue.Queue()
         self.poller = None
@@ -187,6 +205,8 @@ class App:
         self.rec_label = tk.StringVar(value="Readings log: off")
         self.live_sort = tk.BooleanVar(value=s.get("live_sort", False))
         self.sort_col, self.sort_desc = s.get("sort_col"), s.get("sort_desc", False)
+        self.init_var = tk.StringVar()
+        self.saved_init = s.get("init_mode", "auto")
         self.iface_var = tk.StringVar()
         self.iface_keys = {}  # combobox label -> interface key
         self.saved_iface = s.get("iface", AUTO)
@@ -196,12 +216,12 @@ class App:
         self.prof_var = tk.StringVar()
         self.profiles, self.prof_keep, self.prof_mtime = {}, [], None
         self._last_sort = 0.0
-        self.check_updates = s.get("check_updates", True)
         self.welcome, self.welcome_hidden = None, s.get("welcome_hidden_version", "")
         root.title(f"MUT-II live data: Eclipse 4G63 – mitsu-kkl {__version__}")
         root.geometry(s.get("geometry", "940x600"))
         self._build()
         self.refresh_ifaces(cli_iface or self.saved_iface)
+        self._set_init(cli_init or self.saved_init)
         # "pids" is the pre-definitions-file setting; it seeds a newly created file
         dtc_problems = self._load_dtc_defs()
         prof_problems = self._load_profiles(select=s.get("profile", ""))
@@ -212,8 +232,7 @@ class App:
             self.note.set(self.note.get() + f"  {PROFILES.name}: " + "; ".join(prof_problems[:3]))
         root.protocol("WM_DELETE_WINDOW", self.close)
         root.after(50, self._tick)
-        if self.check_updates:
-            threading.Thread(target=lambda: self.q.put(("update", check_latest())), daemon=True).start()
+        threading.Thread(target=lambda: self.q.put(("update", check_latest())), daemon=True).start()
         if self.welcome_hidden != __version__:  # "don't show again" only holds for the version it was ticked in
             root.after(300, self.show_welcome)
 
@@ -227,7 +246,11 @@ class App:
         self.cb_iface.pack(side="left", padx=4)
         self.btn_refresh = ttk.Button(iff, text="Refresh", command=lambda: self.refresh_ifaces(announce=True))
         self.btn_refresh.pack(side="left")
-        ttk.Label(iff, text="Cable with a non-FTDI chip (CH340, PL2303…): pick its COM port.",
+        ttk.Label(iff, text="ECU init:").pack(side="left", padx=(12, 0))
+        self.cb_init = ttk.Combobox(iff, textvariable=self.init_var, state="readonly", width=34,
+                                    values=[label for _, label in INIT_CHOICES])
+        self.cb_init.pack(side="left", padx=4)
+        ttk.Label(iff, text="Non-FTDI cable (CH340, PL2303…): pick its COM port.",
                   foreground="#555555").pack(side="left", padx=8)
 
         top = ttk.Frame(self.root)
@@ -343,7 +366,7 @@ class App:
              "live_sort": self.live_sort.get(), "sort_col": self.sort_col, "sort_desc": self.sort_desc,
              # a simulator chosen on the command line must not become the default interface
              "iface": self.saved_iface if iface.startswith("sim:") else iface,
-             "profile": self.prof_var.get(), "check_updates": self.check_updates,
+             "profile": self.prof_var.get(), "init_mode": self._init_mode(),
              "welcome_hidden_version": self.welcome_hidden}
         try:
             SETTINGS.write_text(json.dumps(s, indent=1), encoding="utf-8")
@@ -351,6 +374,12 @@ class App:
             pass
 
     # -- interface ---------------------------------------------------------------------
+    def _init_mode(self):
+        return next((k for k, label in INIT_CHOICES if label == self.init_var.get()), "auto")
+
+    def _set_init(self, mode):
+        self.init_var.set(dict(INIT_CHOICES).get(mode, INIT_CHOICES[0][1]))
+
     def _iface_key(self):
         return self.iface_keys.get(self.iface_var.get(), AUTO)
 
@@ -1115,11 +1144,12 @@ class App:
         self.csv.writerow(["time", "pid", "old", "new", "delta"])
         key = self._iface_key()
         self.iface_used = ""
-        self.poller = Poller(lambda: open_interface(key), list(self.rows), self.q)
+        self.poller = Poller(lambda: open_interface(key), list(self.rows), self.q, self._init_mode())
         self.poller.start()
         self.btn_conn.configure(state="disabled")
         self.btn_disc.configure(state="normal")
         self.cb_iface.configure(state="disabled")
+        self.cb_init.configure(state="disabled")
         self.btn_refresh.configure(state="disabled")
         self.status.set("Opening interface...")
 
@@ -1136,6 +1166,7 @@ class App:
         self.btn_conn.configure(state="normal")
         self.btn_disc.configure(state="disabled")
         self.cb_iface.configure(state="readonly")
+        self.cb_init.configure(state="readonly")
         self.btn_refresh.configure(state="normal")
         self.info.set("")
         if not self.status.get().startswith(("Interface error", "Cannot open")):
@@ -1157,7 +1188,7 @@ class App:
                 elif kind == "connected":
                     self.ecu_id = msg[1]
                     via = f" via {self.iface_used}" if self.iface_used else ""
-                    self.status.set(f"Connected to engine ECU, ID {msg[1]}{via}")
+                    self.status.set(f"Connected to engine ECU, ID {msg[1]}{via} ({msg[2]})")
                 elif kind == "rate":
                     self.info.set(f"{msg[1]:.0f} reads/s, cycle {msg[2]:.2f} s")
                 elif kind == "fatal":
@@ -1205,16 +1236,10 @@ class App:
         bar = tk.Frame(self.root, background="#fff3c4")
         bar.pack(fill="x", before=self.first_bar)
 
-        def never():
-            self.check_updates = False
-            self._save_settings()
-            bar.destroy()
-
         tk.Label(bar, text=f"A newer version is available: {tag} (you have {__version__}).",
                  background="#fff3c4").pack(side="left", padx=6, pady=3)
         ttk.Button(bar, text="Open download page", command=lambda: webbrowser.open(url)).pack(side="left", padx=2)
         ttk.Button(bar, text="Later", command=bar.destroy).pack(side="left", padx=2)
-        ttk.Button(bar, text="Don't check again", command=never).pack(side="left", padx=2)
 
     def close(self):
         self._save_settings()
@@ -1237,10 +1262,12 @@ def main():
     ap.add_argument("--dev", type=int, help="D2XX device index (implies --backend d2xx)")
     ap.add_argument("--serial", help="D2XX: open by FTDI serial number (implies --backend d2xx)")
     ap.add_argument("--connect", action="store_true", help="connect right after start")
+    ap.add_argument("--init", choices=proto.INIT_MODES,
+                    help="ECU init: auto (0x00 and 0x33 in turn), mut (MUT-II 0x00), obd (OBD-II 0x33)")
     args = ap.parse_args()
     cli_iface = cli_key(args.backend, args.dev, args.serial, args.port, args.sim)  # None: use the window's choice
     root = tk.Tk()
-    app = App(root, cli_iface)
+    app = App(root, cli_iface, args.init)
     if args.connect:
         root.after(200, app.connect)
     root.mainloop()

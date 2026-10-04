@@ -1,3 +1,3 @@
 """K-line probing toolkit for old Mitsubishi ECUs over an FTDI (KKL) cable."""
 
-__version__ = "0.1.2"  # keep in sync with the GitHub release tag (v0.1.2)
+__version__ = "0.1.3"  # keep in sync with the GitHub release tag (v0.1.3)

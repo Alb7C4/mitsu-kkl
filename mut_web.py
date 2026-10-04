@@ -22,7 +22,7 @@ from dataclasses import replace
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 
-from kkl import __version__, dtcdefs, piddefs
+from kkl import __version__, dtcdefs, piddefs, proto
 from kkl.interfaces import AUTO, cli_key, list_interfaces, open_interface
 from kkl.livepoll import Poller
 
@@ -43,8 +43,9 @@ def hx(pid):
 class Hub:
     """State shared by the poller thread, the HTTP handlers and the event-stream clients."""
 
-    def __init__(self, iface, defs_path=None):
+    def __init__(self, iface, defs_path=None, init_mode="auto"):
         self.lock = threading.RLock()
+        self.init_mode = init_mode
         self.clients = set()
         self.iface, self.poller = iface, None
         self.status = {"code": "idle", "detail": "", "ecu_id": "", "iface": ""}
@@ -108,7 +109,7 @@ class Hub:
             if iface:
                 self.iface = iface
             key = self.iface
-            self.poller = Poller(lambda: open_interface(key), self.pids, self.on_poller)
+            self.poller = Poller(lambda: open_interface(key), self.pids, self.on_poller, self.init_mode)
             self.poller.start()
 
     def disconnect(self, wait=0.0):
@@ -136,7 +137,7 @@ class Hub:
                 st.update(code=args[0], detail=args[1], ecu_id="")
                 msg = {"type": "status", **st}
             elif kind == "connected":
-                st.update(code="connected", detail="", ecu_id=args[0])
+                st.update(code="connected", detail=args[1], ecu_id=args[0])
                 msg = {"type": "status", **st}
             elif kind == "stopped":
                 self.poller, self.rate = None, None
@@ -319,10 +320,13 @@ def main():
     ap.add_argument("--lan", action="store_true", help="accept connections from other devices on the network")
     ap.add_argument("--no-browser", action="store_true", help="don't open the browser")
     ap.add_argument("--defs", help="PID definitions file (default: the one mut_gui uses)")
+    ap.add_argument("--init", choices=proto.INIT_MODES, default="auto",
+                    help="ECU init: mut = MUT-II 0x00 (EU cars, Evo), obd = OBD-II 0x33 (US cars, "
+                         "like EvoScan's DSM mode), auto = both in turn (default)")
     args = ap.parse_args()
 
     key = cli_key(args.backend, args.dev, args.serial, args.port, args.sim) or AUTO
-    hub = Handler.hub = Hub(key, args.defs)
+    hub = Handler.hub = Hub(key, args.defs, args.init)
     server = ThreadingHTTPServer(("0.0.0.0" if args.lan else "127.0.0.1", args.http_port), Handler)
     server.daemon_threads = True
     url = f"http://127.0.0.1:{args.http_port}/"

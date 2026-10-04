@@ -17,7 +17,7 @@ Powstał i był testowany na **Mitsubishi Eclipse 1998 2.0 16V 4G63 (wersja EU)*
 
 | narzędzie | co robi |
 |---|---|
-| **`mut_gui`** | Podgląd na żywo: dowolne ze 190+ odczytywalnych PID-ów z własnymi nazwami i przelicznikami, podświetlanie zmian, min/max, zapis do CSV, widok kodów usterek, profile list PID-ów, automatyczne ponowne łączenie. |
+| **`mut_gui`** | Podgląd na żywo: dowolne ze 190+ odczytywalnych PID-ów z własnymi nazwami i przelicznikami, podświetlanie zmian, min/max, zapis do CSV, widok kodów usterek, profile list PID-ów, automatyczne ponowne łączenie, automatyczny wybór inicjalizacji MUT-II (0x00) albo OBD-II (0x33). |
 | **`kkl_probe`** | Sonda w wierszu poleceń: test kabla, MUT-II / ISO 9141-2 / KWP2000 (inicjalizacja wolna i szybka) / DSM 1953 bodów, skanowanie adresów, pełna macierz testów, odczyt kodów usterek. Każde uruchomienie jest zapisywane bajt po bajcie ze znacznikami czasu. |
 
 Oba narzędzia **z założenia tylko odczytują** (zob. [Bezpieczeństwo](#bezpieczeństwo)).
@@ -40,7 +40,7 @@ Używane piny OBD: 7 = linia K, 16 = +12 V, 4/5 = masa, 1 = tryb diagnostyczny.
 1. Pobierz `mitsu-kkl-<wersja>-windows.zip` z **[Releases](../../releases)** i rozpakuj w dowolnym miejscu.
 2. Do kabla z układem FTDI zainstaluj sterownik FTDI (VCP + D2XX) ze strony [ftdichip.com](https://ftdichip.com/drivers/). Windows często instaluje go sam.
 3. Podłącz kabel do auta, zewrzyj pin 1 do masy, włącz zapłon (silnik może być wyłączony).
-4. Uruchom **`mut_gui.exe`**, wybierz kabel z listy *Interface* (albo zostaw *Automatic*) i kliknij *Connect*.
+4. Uruchom **`mut_gui.exe`**, wybierz kabel z listy *Interface* (albo zostaw *Automatic*), *ECU init* zostaw na *Auto* i kliknij *Connect*.
 
 Pliki .exe nie są podpisane, więc przy pierwszym uruchomieniu Windows SmartScreen może ostrzec („Więcej informacji” → „Uruchom mimo to”).
 Ustawienia, definicje PID-ów i logi są zapisywane obok pliku .exe.
@@ -49,13 +49,32 @@ Nie masz auta pod ręką? `mut_gui.exe --backend sim --sim mutlive --connect` ur
 
 **Aktualizacje:** przy starcie `mut_gui` pyta w tle GitHub, czy jest nowsze wydanie, i jeśli jest, pokazuje
 pasek z odnośnikiem do strony pobierania (pobierasz zip i podmieniasz pliki; ustawienia, definicje i logi
-zostają). Bez internetu nic się nie pokazuje. „Don't check again” wyłącza sprawdzanie
-(`"check_updates": false` w `mut_gui.json`). `kkl_probe info` wypisuje wersję i tę samą podpowiedź.
+zostają). Sprawdzanie odbywa się przy każdym starcie; bez internetu nic się nie pokazuje.
+`kkl_probe info` wypisuje wersję i tę samą podpowiedź.
 
 **Okno powitalne:** `mut_gui` przy każdym starcie pokazuje krótkie wprowadzenie prostym językiem
 (`welcome/pl.md`, `welcome/en.md`), po polsku, gdy Windows jest ustawiony na polski, w przeciwnym razie
 po angielsku (język przełącza się w oknie). „Nie pokazuj więcej” ukrywa je
 do następnej wersji; przycisk *About…* otwiera je w każdej chwili.
+
+## Inicjalizacja sterownika: Auto, MUT-II 0x00, OBD-II 0x33
+
+Lista *ECU init* w `mut_gui` (oraz opcja `--init auto|mut|obd` w `mut_gui` i `mut_web.py`) wybiera sposób
+nawiązania sesji ze sterownikiem silnika:
+
+| wybór | co jest wysyłane | dla |
+|---|---|---|
+| **Auto** (domyślnie) | na zmianę 0x00 i 0x33, aż sterownik odpowie; po zerwaniu sesji zaczyna od tej, która zadziałała | każde auto |
+| MUT-II 0x00 | 5 bodów na 0x00, sterownik odpowiada `55 EF 85` przy 15625 bodach, bez potwierdzenia | europejskie auta z lat 90., Evo 4–9; potwierdzone na testowym aucie |
+| OBD-II 0x33 | 5 bodów na 0x33 (ISO 9141-2), `55 KB1 KB2` przy 10400 bodach, potwierdzenie `~KB2`, potem te same jednobajtowe zapytania MUT | auta z USA z OBD-II (np. Eclipse / Talon 2G, 3000GT); **nie sprawdzone na aucie** |
+
+Skąd dwie: drugim kablem i Raspberry Pi Pico podsłuchaliśmy na linii K, co wysyła **EvoScan**
+(3.1 i 2.6, tryb OpenPort 1.3 z kablem KKL, ECU „EFI”). Zawsze zaczyna od adresu OBD-II **0x33**
+(opcja „DSM/3000GT/Eclipse MUTovrOBDII”, która sama się z powrotem włącza), a europejski sterownik
+z 1998 r. nigdy na niego nie odpowiada, choć na 0x00 odpowiada po 100 ms. Dlatego EvoScan nie łączy się
+z tym autem, a mitsu-kkl tak. *Auto* obsługuje oba rodzaje sterowników. Co EvoScan robi po udanej
+inicjalizacji 0x33, nie dało się zobaczyć, więc ścieżka OBD-II używa standardowego potwierdzenia
+ISO 9141-2 przy 10400 bodach.
 
 ## Uruchomienie ze źródeł
 
@@ -77,6 +96,7 @@ python kkl_probe.py selftest
 python mut_web.py                                        # otwiera przeglądarkę pod http://127.0.0.1:8080/
 python mut_web.py --lan                                  # dostępna też z telefonu w tej samej sieci Wi-Fi
 python mut_web.py --backend sim --sim mutlive --connect  # demo bez auta
+python mut_web.py --init mut                             # tylko inicjalizacja MUT-II 0x00 (domyślnie: auto)
 ```
 
 Lista PID-ów z nazwami i przelicznikami (ten sam plik definicji co w `mut_gui`), podświetlanie zmian,
@@ -86,6 +106,11 @@ nazwy PID-ów. Strona (`web/`) rozmawia z serwerem wyłącznie przez [web/API.md
 czemu **firmware na Raspberry Pi Pico 2 W** z folderu [pico/](pico/README.md) podaje tę samą stronę przez
 własną sieć Wi-Fi, z transceiverem linii K zamiast kabla USB (MicroPython; przetestowany na PC
 z symulatorem sterownika, jeszcze nie na urządzeniu). Schemat i lista części: [pico/hw](pico/hw/README.md).
+
+**Podsłuch linii K:** `python tools/sniff_pico.py` zamienia Raspberry Pi Pico (W) z MicroPythonem
+w rejestrator, który tylko słucha ([pico/sniffer.py](pico/sniffer.py)): każde zbocze z wyjścia odbiornika
+linii K z rozdzielczością 1 µs, rozkodowane na ramki inicjalizacji 5 bodów (adres, długość bitu) i bajty
+przy 15625 / 10400 / 9600 / 1953 bodach. `tools/sniff_ch340.py` robi prostszy zapis przez drugi kabel KKL.
 
 ## kkl_probe w skrócie
 
@@ -115,6 +140,7 @@ Wyniki mają ranking `NO_ECHO` < `SILENT` < `NOISE` < `SYNC` < `HANDSHAKE` < `DA
 - Kasowanie kodów komendą MUT `0xCA` na tym sterowniku **nie działa**; działa odłączenie akumulatora.
 - Dotychczasowa mapa PID-ów (temperatura cieczy i powietrza, kąt wyprzedzenia, docelowe obroty biegu jałowego, czas wtrysku, korekty paliwa, flagi przepustnicy…) jest w [PID_znaczenia.md](PID_znaczenia.md) i trafia do pliku definicji PID-ów jako nazwy i przeliczniki.
 - Adresy 00–7F zgadzają się z [listą zapytań MUT z EvoEcu](https://evoecu.logic.net/wiki/MUT_Requests) (nie są przesunięte); układ kodów usterek i zakres 80–BF są inne.
+- EvoScan 3.1 i 2.6 zaczynają sesję od 0x33, którego ten sterownik nie słucha, więc się nie łączą (zob. [Inicjalizacja sterownika](#inicjalizacja-sterownika-auto-mut-ii-0x00-obd-ii-0x33)).
 
 Inne modele Mitsubishi z tych lat mogą używać tej samej inicjalizacji; wyniki i znaczenia PID-ów będą się różnić między sterownikami.
 

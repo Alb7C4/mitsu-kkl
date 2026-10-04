@@ -37,8 +37,9 @@ One JSON object per `data:` line. A new client first gets `state`.
 | `pids` | `pids` | the polled list changed |
 | `defs` | – | definitions changed; clients reload `GET /api/defs` |
 
-Status codes: `idle`, `opening`, `connecting`, `no_response` (`detail` = probe outcome),
-`connected` (`ecu_id`, `iface`), `lost`, `error` (`detail` = message).
+Status codes: `idle`, `opening`, `connecting` (`detail` = init method being tried, may be empty),
+`no_response` (`detail` = init method and probe outcome), `connected` (`ecu_id`, `iface`,
+`detail` = init method that worked, may be empty), `lost`, `error` (`detail` = message).
 
 Conversions (`conv`) are evaluated in the browser: an expression in `x` (raw byte 0–255) with
 numbers, `+ - * / // % & | ^ >>`, parentheses, `abs min max round`, or the keywords `dtc`,

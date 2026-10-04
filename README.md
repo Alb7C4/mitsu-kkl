@@ -17,7 +17,7 @@ Developed and tested on a **Mitsubishi Eclipse 1998 2.0 16V 4G63 (EU)**, engine 
 
 | tool | what it does |
 |---|---|
-| **`mut_gui`** | Live data viewer: any of the 190+ readable PIDs with your own names and conversions, change highlighting, min/max, CSV recording, fault code view, PID list profiles, automatic reconnect. |
+| **`mut_gui`** | Live data viewer: any of the 190+ readable PIDs with your own names and conversions, change highlighting, min/max, CSV recording, fault code view, PID list profiles, automatic reconnect, automatic choice between the MUT-II (0x00) and OBD-II (0x33) init. |
 | **`kkl_probe`** | Command-line probe: self-test of the cable, MUT-II / ISO 9141-2 / KWP2000 slow and fast init / DSM 1953 baud, address scans, a full test matrix, fault code reading. Every run is logged byte by byte with timestamps. |
 
 Both tools are **read-only by design** (see [Safety](#safety)).
@@ -40,7 +40,7 @@ OBD pins used: 7 = K-line, 16 = +12 V, 4/5 = ground, 1 = diagnostic mode.
 1. Get `mitsu-kkl-<version>-windows.zip` from **[Releases](../../releases)** and unzip it anywhere.
 2. For an FTDI cable, install the FTDI driver (VCP + D2XX) from [ftdichip.com](https://ftdichip.com/drivers/). Windows often installs it by itself.
 3. Plug the cable into the car, ground pin 1, switch the ignition on (engine may stay off).
-4. Start **`mut_gui.exe`**, pick the cable in the *Interface* list (or leave *Automatic*), press *Connect*.
+4. Start **`mut_gui.exe`**, pick the cable in the *Interface* list (or leave *Automatic*), leave *ECU init* on *Auto*, press *Connect*.
 
 The .exe files are not signed, so Windows SmartScreen may warn on first start ("More info" → "Run anyway").
 Settings, PID definitions and logs are kept next to the .exe.
@@ -49,12 +49,31 @@ No car at hand? `mut_gui.exe --backend sim --sim mutlive --connect` runs a simul
 
 **Updates:** on start `mut_gui` asks GitHub in the background whether a newer release exists and, if so,
 shows a bar with a link to the download page (download the zip and replace the files; your settings,
-definitions and logs stay). Nothing is shown when offline. "Don't check again" turns it off
-(`"check_updates": false` in `mut_gui.json`). `kkl_probe info` prints the version and the same hint.
+definitions and logs stay). The check runs on every start; nothing is shown when offline.
+`kkl_probe info` prints the version and the same hint.
 
 **Welcome window:** `mut_gui` shows a short plain-language introduction on every start (`welcome/en.md`,
 `welcome/pl.md`), in Polish when Windows is set to Polish and in English otherwise (switchable in the window). "Don't show again" hides it until the next
 version; the *About…* button opens it any time.
+
+## ECU init: Auto, MUT-II 0x00, OBD-II 0x33
+
+The *ECU init* list in `mut_gui` (and `--init auto|mut|obd` for `mut_gui` and `mut_web.py`) chooses how
+the session with the engine ECU is opened:
+
+| choice | what is sent | for |
+|---|---|---|
+| **Auto** (default) | 0x00 and 0x33 in turn until the ECU answers; after a dropped session it starts with the one that worked | any car |
+| MUT-II 0x00 | 5-baud 0x00, the ECU answers `55 EF 85` at 15625 baud, no acknowledge | European 1990s cars, Evo 4–9; confirmed on the test car |
+| OBD-II 0x33 | 5-baud 0x33 (ISO 9141-2), `55 KB1 KB2` at 10400 baud, `~KB2` acknowledge, then the same 1-byte MUT requests | US cars with OBD-II (e.g. 2G Eclipse / Talon, 3000GT); **not tested on a car** |
+
+Why two: with a second cable and a Raspberry Pi Pico listening on the K-line we recorded what
+**EvoScan** (3.1 and 2.6, OpenPort 1.3 mode with a KKL cable, ECU "EFI") sends. It always opens with the
+OBD-II address **0x33** (its "DSM/3000GT/Eclipse MUTovrOBDII" option, which switches itself back on),
+and the European 1998 ECU never answers it, while it answers 0x00 within 100 ms. That is why EvoScan
+does not connect to this car and mitsu-kkl does. *Auto* covers both kinds of ECU. What EvoScan does
+after a successful 0x33 init could not be seen, so the OBD-II path uses the standard ISO 9141-2
+handshake at 10400 baud.
 
 ## Run from source
 
@@ -76,6 +95,7 @@ python kkl_probe.py selftest
 python mut_web.py                                        # opens the browser at http://127.0.0.1:8080/
 python mut_web.py --lan                                  # also reachable from a phone on the same Wi-Fi
 python mut_web.py --backend sim --sim mutlive --connect  # demo without a car
+python mut_web.py --init mut                             # only the MUT-II 0x00 init (default: auto)
 ```
 
 PID list with names and conversions (the same definitions file as `mut_gui`), change highlighting,
@@ -85,6 +105,11 @@ The page (`web/`) talks to its server only through [web/API.md](web/API.md), so 
 **Raspberry Pi Pico 2 W firmware** in [pico/](pico/README.md) serves the same page from its own
 Wi-Fi network, with a K-line transceiver instead of a USB cable (MicroPython; tested on a PC with the
 ECU simulator, not yet on the device). Schematic and parts list: [pico/hw](pico/hw/README.md).
+
+**K-line sniffer:** `python tools/sniff_pico.py` turns a Raspberry Pi Pico (W) with MicroPython into a
+listen-only K-line recorder ([pico/sniffer.py](pico/sniffer.py)): every edge of a K-line receiver output
+with 1 µs resolution, decoded into 5-baud init frames (address, bit time) and bytes at 15625 / 10400 /
+9600 / 1953 baud. `tools/sniff_ch340.py` does a simpler capture through a second KKL cable.
 
 ## kkl_probe quick reference
 
@@ -114,6 +139,7 @@ Results are ranked `NO_ECHO` < `SILENT` < `NOISE` < `SYNC` < `HANDSHAKE` < `DATA
 - Erasing codes with MUT `0xCA` does **not** work on this ECU; disconnecting the battery does.
 - The PID map built so far (coolant, intake air, timing, idle target, injector pulse, fuel trims, throttle flags…) is in [PID_znaczenia.md](PID_znaczenia.md) (Polish) and ships as names/conversions in the PID definitions file.
 - Addresses 00–7F match the [EvoEcu MUT request list](https://evoecu.logic.net/wiki/MUT_Requests) (not shifted); fault code layout and 80–BF differ.
+- EvoScan 3.1 and 2.6 open the session with 0x33, which this ECU ignores, so they cannot connect (see [ECU init](#ecu-init-auto-mut-ii-0x00-obd-ii-0x33)).
 
 Other Mitsubishi models of the same era may use the same init; results and PID meanings will differ per ECU.
 

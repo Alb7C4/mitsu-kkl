@@ -5,6 +5,7 @@ It shows live sensor readings, such as engine speed, engine temperature, battery
 accelerator position, and the fault codes.
 
 **Especially useful for 1998–1999 model years**, which most ordinary diagnostic testers cannot connect to.
+It also connects to European engine computers that the EvoScan program cannot talk to.
 
 **The program only reads data. It never changes anything in the car.**
 
@@ -24,6 +25,10 @@ accelerator position, and the fault codes.
 2. Connect pin 1 to pin 4 or 5 with the wire.
 3. Turn the key to ignition on. The engine does not need to run.
 4. Click **Connect** in the program. After a few seconds the values in the list start changing.
+
+The **ECU init** list next to the cable choice sets how the program wakes up the car's computer. Leave it on
+**Auto**: the program tries the European way (0x00) and the American way (0x33, as EvoScan does) in turn
+until the car answers.
 
 The check-engine light may start blinking. That is normal: the car's computer shows its fault codes this way.
 

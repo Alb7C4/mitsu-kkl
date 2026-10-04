@@ -65,6 +65,19 @@ Interfejs programu jest po angielsku; poniżej nazwy przycisków tak, jak są w 
     interfejs jest połączenie.
   - Opcje `--backend auto|d2xx|serial|sim` albo samo `--port COMx` w wierszu poleceń nadpisują wybór z okna.
 
+- **ECU init** (obok listy kabli): sposób nawiązania sesji ze sterownikiem.
+  - „Auto: 0x00, then 0x33” (domyślnie) próbuje na zmianę obu sposobów, aż sterownik odpowie. Po zerwaniu
+    sesji zaczyna od tego, który zadziałał. Status pokazuje, który sposób jest właśnie próbowany,
+    a po połączeniu, który zadziałał.
+  - „MUT-II 0x00 (EU cars, Evo)”: 5 bodów na adres 0x00, odpowiedź `55 EF 85` przy 15625 bodach, bez
+    potwierdzenia. Tak łączy się testowy Eclipse 1998 (EU).
+  - „OBD-II 0x33 (US cars, EvoScan DSM)”: 5 bodów na 0x33 jak w ISO 9141-2, odpowiedź `55 KB1 KB2` przy
+    10400 bodach, potwierdzenie `~KB2`, sterownik odsyła `CC`, potem te same jednobajtowe zapytania MUT.
+    Tak zaczyna EvoScan (zob. „Wyniki”); dla aut z USA z OBD-II. Nie sprawdzone na aucie, bo testowy
+    sterownik na 0x33 nie odpowiada.
+  - Wybór zapisuje się w `mut_gui.json` (`"init_mode"`), w czasie połączenia listy nie da się zmienić,
+    `--init auto|mut|obd` w wierszu poleceń nadpisuje wybór z okna.
+
 - **Plik definicji** (średniki, UTF-8, otwiera się też w Excelu). Nowy plik nazywa się
   `pid_definitions.csv`; istniejący `pid_definicje.csv` jest nadal używany. Plik z polskiej wersji
   przy pierwszym wczytaniu dostaje angielski nagłówek i angielskie nazwy domyślne. Twoje własne
@@ -135,8 +148,8 @@ Interfejs programu jest po angielsku; poniżej nazwy przycisków tak, jak są w 
 - Ok. 200 odczytów/s. Przy utracie sesji łączy się ponownie samo. Ustawienia zapisuje w `mut_gui.json`.
 - **Aktualizacje:** przy starcie program w tle pyta GitHub, czy jest nowsze wydanie. Jeśli jest, u góry
   okna pojawia się pasek z przyciskiem „Open download page”. Pobierasz zip i podmieniasz pliki;
-  ustawienia, definicje i logi zostają. Bez internetu nic się nie pokazuje. „Don't check again”
-  wyłącza sprawdzanie (`"check_updates": false` w `mut_gui.json`). Wersja jest w tytule okna,
+  ustawienia, definicje i logi zostają. Sprawdzanie odbywa się przy każdym starcie i nie da się go
+  wyłączyć; bez internetu nic się nie pokazuje. Wersja jest w tytule okna,
   a `kkl_probe.py info` pokazuje ją razem z tą samą podpowiedzią (`--version` wypisuje samą wersję).
 - **Okno powitalne:** przy każdym starcie pokazuje krótkie wprowadzenie dla osób nietechnicznych
   (`welcome/pl.md` albo `welcome/en.md`; szczegóły techniczne zostają w README), po polsku,
@@ -155,7 +168,8 @@ python mut_web.py --backend sim --sim mutlive --connect  # demo bez auta
 ```
 
 Opcje: `--backend auto|d2xx|serial|sim`, `--port COMx` (kabel przez port COM), `--connect` (łączy od razu),
-`--http-port 8080`, `--lan`, `--no-browser`, `--defs plik.csv` (inny plik definicji, np. do testów).
+`--http-port 8080`, `--lan`, `--no-browser`, `--defs plik.csv` (inny plik definicji, np. do testów),
+`--init auto|mut|obd` (sposób inicjalizacji jak lista „ECU init” w GUI, domyślnie `auto`).
 
 - **Kabel** i **Połącz/Rozłącz** w nagłówku. Status mówi, co się dzieje, np. „Sterownik nie odpowiada…
   Pin 1 na masie? Zapłon włączony?”.
@@ -233,6 +247,29 @@ Interfejs (`--backend`):
 
 Każde uruchomienie zapisuje pełną oś czasu bajtów w `logs/<czas>_<komenda>.jsonl`, a każda
 próba trafia jako jedna linia do `logs/attempts.jsonl`.
+
+## Podsłuch linii K i EvoScan (2026-10-04)
+
+Narzędzia, które tylko słuchają (nic nie wysyłają na linię K):
+
+```
+python tools/sniff_pico.py                 # Raspberry Pi Pico (W) z MicroPythonem, wejście GP1, Ctrl+C kończy
+python tools/sniff_pico.py --decode logs/<plik>_pico_sniff.txt   # ponowne rozkodowanie zapisu
+python tools/sniff_ch340.py                # drugi kabel KKL (domyślnie COM14, 15625 bodów)
+```
+
+- `sniff_pico.py` wysyła na Pico `pico/sniffer.py` (nic nie instaluje, `main.py` zostaje). PIO zapisuje
+  każde zbocze z wyjścia odbiornika linii K z rozdzielczością 1 µs, DMA przepisuje je do bufora.
+  Wynik `logs/<czas>_pico_sniff_decoded.txt`: ramki 5 bodów z adresem i długością bitu, bajty
+  z rozpoznaną prędkością (15625 / 10400 / 9600 / 1953), odstępy i czas od bitu stopu do odpowiedzi.
+  Podłączenie: wyjście odbiornika (np. RXD układu CH340, przez dzielnik, jeśli jest 5 V) → GP1, masa.
+- `sniff_ch340.py` zapisuje bajty przy jednej prędkości; zbocza widać tylko pośrednio (bajty `00`).
+
+Wynik dla EvoScan 3.1 i 2.6 (tryb OpenPort 1.3, kabel KKL, ECU „EFI”, pin 1 na masie):
+- każda próba to inicjalizacja 5 bodów na adres **0x33** (bit ok. 203–207 ms), co ok. 2,9 s,
+- sterownik E4 3A nigdy nie odpowiada; na 0x00 z `mitsu-kkl` odpowiada `55 EF 85` po ok. 101 ms,
+- odznaczenie „DSM/3000GT/Eclipse MUTovrOBDII” nic nie zmienia (opcja i tak wraca po restarcie),
+- wniosek: EvoScan nie połączy się z tym sterownikiem; stąd opcja „ECU init” w `mut_gui`.
 
 ## Bezpieczeństwo
 

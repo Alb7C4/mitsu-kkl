@@ -2,7 +2,8 @@
 
 Models: 'mut' (addr 00, 15625, 55 EF 85, echo + 1 byte), 'mutlive' (like mut but every
 request 00-BF answers and RPM/TPS/coolant move), 'iso' (0x33, 10400,
-08 08, ~KB2 / CC, OBD mode 01/03), 'kwp' (fast init, C1 E9 8F), 'dsm' (1953,
+08 08, ~KB2 / CC, OBD mode 01/03), 'mutobd' (MUT requests after an OBD-II 0x33 init at
+10400, like a US car for EvoScan's DSM mode), 'kwp' (fast init, C1 E9 8F), 'dsm' (1953,
 no init), 'none' (powered bus, nobody answers), 'dead' (cable not powered).
 """
 
@@ -81,9 +82,10 @@ class SimDevice:
         if self.model in ("mut", "mutlive") and addr == 0x00:
             self._ecu_bytes(t_end + 0.05, [0x55, 0xEF, 0x85], 15625)
             self.session = {"type": "mut", "last": t_end} if abs(self.baud - 15625) < 400 else None
-        elif self.model == "iso" and addr == 0x33:
+        elif self.model in ("iso", "mutobd") and addr == 0x33:
             self._ecu_bytes(t_end + 0.1, [0x55, 0x08, 0x08], 10400, gap=0.01)
-            self.session = {"type": "iso", "stage": "kb", "t_kb2": t_end + 0.12, "last": t_end}
+            self.session = {"type": "iso", "stage": "kb", "t_kb2": t_end + 0.12, "last": t_end,
+                            "then": "mut" if self.model == "mutobd" else "ready"}
 
     def _on_byte(self, t, b):
         if self.session and t - self.session.get("last", t) > 5.0:
@@ -99,6 +101,8 @@ class SimDevice:
             if b == 0xF7 and 0.024 <= t - s["t_kb2"] <= 0.052:
                 self._push(t + 0.03, 0xCC)
                 s["stage"], self.frame = "ready", []
+                if s["then"] == "mut":
+                    s["type"] = "mut"
         elif s and s.get("stage") == "ready":
             self._frame_byte(t, b)
         elif self.model == "kwp" and self.wakeup_t and t - self.wakeup_t < 0.2:
@@ -107,7 +111,7 @@ class SimDevice:
             self._frame_byte(t, b)
 
     def _mut_value(self, b):
-        if self.model != "mutlive":
+        if self.model not in ("mutlive", "mutobd"):
             return MUT_VALUES.get(b)
         if b > 0xBF and b not in MUT_VALUES:
             return None

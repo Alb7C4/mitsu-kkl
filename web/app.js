@@ -22,9 +22,9 @@ const TEXT = {
     faultNote: "Fault codes: 40/41 active, 45/46 stored.",
     rejected: "Skipped (blocked or invalid): {l}", recStopped: "The PID list changed, the recording was saved.",
     reads: "{r} reads/s",
-    st_idle: "Disconnected", st_opening: "Opening the cable…", st_connecting: "Connecting to the engine ECU…",
+    st_idle: "Disconnected", st_opening: "Opening the cable…", st_connecting: "Connecting to the engine ECU{dd}…",
     st_no_response: "ECU not responding ({d}), retrying in 3 s. Pin 1 grounded? Ignition on?",
-    st_connected: "Connected, ECU ID {id}{via}", via: " via {i}", st_lost: "Connection lost, reconnecting…",
+    st_connected: "Connected, ECU ID {id}{via}{dd}", via: " via {i}", st_lost: "Connection lost, reconnecting…",
     st_error: "Error: {d}", st_server: "No connection to the server, retrying…",
   },
   pl: {
@@ -43,9 +43,9 @@ const TEXT = {
     faultNote: "Kody usterek: 40/41 aktywne, 45/46 zapamiętane.",
     rejected: "Pominięte (zablokowane lub błędne): {l}", recStopped: "Lista PID-ów się zmieniła, nagranie zapisano.",
     reads: "{r} odczytów/s",
-    st_idle: "Rozłączono", st_opening: "Otwieranie kabla…", st_connecting: "Łączenie ze sterownikiem silnika…",
+    st_idle: "Rozłączono", st_opening: "Otwieranie kabla…", st_connecting: "Łączenie ze sterownikiem silnika{dd}…",
     st_no_response: "Sterownik nie odpowiada ({d}), ponowna próba za 3 s. Pin 1 na masie? Zapłon włączony?",
-    st_connected: "Połączono, ID sterownika {id}{via}", via: ", przez {i}", st_lost: "Utracono połączenie, łączę ponownie…",
+    st_connected: "Połączono, ID sterownika {id}{via}{dd}", via: ", przez {i}", st_lost: "Utracono połączenie, łączę ponownie…",
     st_error: "Błąd: {d}", st_server: "Brak połączenia z serwerem, ponawiam…",
   },
 };
@@ -288,7 +288,7 @@ function renderStatus() {
   const st = S.status;
   const el = $("status");
   const via = st.iface ? t("via", { i: st.iface }) : "";
-  el.textContent = st.code === "server" ? t("st_server") : t("st_" + st.code, { d: st.detail, id: st.ecu_id, via });
+  el.textContent = st.code === "server" ? t("st_server") : t("st_" + st.code, { d: st.detail, dd: st.detail ? ` (${st.detail})` : "", id: st.ecu_id, via });
   el.className = "status " + ({ connected: "connected", no_response: "warn", lost: "warn", error: "err", server: "err" }[st.code] || "");
   const running = !["idle", "error", "server"].includes(st.code);
   const b = $("btnConn");

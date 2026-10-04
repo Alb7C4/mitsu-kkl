@@ -316,7 +316,7 @@ def build_parser():
     ap.add_argument("--backend", choices=("auto", "d2xx", "serial", "sim"),
                     help="default auto = FTDI via D2XX, else the first FTDI/CH340/PL2303/CP210x COM port; "
                          "serial = any chip via --port (--port alone implies serial)")
-    ap.add_argument("--sim", choices=("mut", "mutlive", "iso", "kwp", "dsm", "none", "dead"), default="mut",
+    ap.add_argument("--sim", choices=("mut", "mutlive", "mutobd", "iso", "kwp", "dsm", "none", "dead"), default="mut",
                     help="ECU model for --backend sim (offline testing)")
     ap.add_argument("--dev", type=int, help="D2XX device index (implies --backend d2xx)")
     ap.add_argument("--serial", help="D2XX: open by FTDI serial number (implies --backend d2xx)")

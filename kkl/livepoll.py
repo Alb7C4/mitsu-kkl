@@ -1,5 +1,6 @@
-"""Background MUT-II poller for live viewers: connects to the engine ECU (5-baud 0x00 at
-15625 baud), polls a PID list in a loop and reconnects when the session drops. Results go
+"""Background MUT-II poller for live viewers: connects to the engine ECU (init method from
+proto.INIT_METHODS: MUT-II 0x00, OBD-II 0x33 or both in turn), polls a PID list in a loop and
+reconnects when the session drops. Results go
 to one callback, so a web server (or a GUI) can use it. Read-only: every request passes
 proto.check_mut()."""
 
@@ -18,12 +19,14 @@ class NullLog:
 
 class Poller(threading.Thread):
     """on_event(kind, *args) kinds:
-    ("status", code, detail) · ("iface", label) · ("connected", ecu_id) · ("val", pid, value|None)
+    ("status", code, detail) · ("iface", label) · ("connected", ecu_id, init_label) · ("val", pid, value|None)
     · ("rate", reads_per_s, cycle_s) · ("stopped",)"""
 
-    def __init__(self, open_dev, pids, on_event):
+    def __init__(self, open_dev, pids, on_event, init_mode="auto"):
         super().__init__(daemon=True)
         self.open_dev, self.emit = open_dev, on_event
+        self.init_mode = init_mode if init_mode in proto.INIT_MODES else "auto"
+        self.last_good = None
         self.stop_ev = threading.Event()
         self.lock = threading.Lock()
         self._pids = list(pids)
@@ -48,14 +51,21 @@ class Poller(threading.Thread):
         hires_timer(True)
         try:
             kl.setup(15625, 1)
+            tries = 0
             while not self.stop_ev.is_set():
-                self.emit("status", "connecting", "")
-                res = proto.mut(kl, NullLog(), addr=0x00, baud=15625, queries=proto.MUT_ID_QUERIES)
+                order = proto.init_order(self.init_mode, self.last_good)
+                method = order[tries % len(order)]
+                label = proto.INIT_METHODS[method]["label"]
+                self.emit("status", "connecting", label)
+                res = proto.connect(kl, NullLog(), method)
+                tries += 1
                 if res["outcome"] != "DATA":
-                    self.emit("status", "no_response", res["outcome"])
-                    self.stop_ev.wait(3.0)
+                    self.emit("status", "no_response", f"{label}: {res['outcome']}")
+                    # in auto mode the other method follows at once; a full round waits 3 s
+                    self.stop_ev.wait(3.0 if tries % len(order) == 0 else 0.3)
                     continue
-                self.emit("connected", "".join(q["resp"] for q in res["queries"]))
+                self.last_good, tries = method, 0
+                self.emit("connected", "".join(q["resp"] for q in res["queries"]), label)
                 self._poll(kl)
                 if not self.stop_ev.is_set():
                     self.emit("status", "lost", "")

@@ -144,8 +144,10 @@ def _query_summary(qs):
 
 
 def mut(kl, log, addr=0x00, baud=15625, ack=False, queries=None, method="break", lline=None,
-        bit_ms=200, idle_ms=300, sync_timeout=1.2, always_query=False, repeat=0, interval=0.0):
-    """MUT-II: 5-baud address, then 1-byte requests answered with echo + 1 byte."""
+        bit_ms=200, idle_ms=300, sync_timeout=1.2, always_query=False, repeat=0, interval=0.0,
+        require_ack=False):
+    """MUT-II: 5-baud address, then 1-byte requests answered with echo + 1 byte.
+    require_ack: with ack, send no requests unless the ECU answered ~KB2 with ~address."""
     if queries is None:
         queries = MUT_ENGINE_QUERIES if addr in ENGINE_ADDRS else MUT_ID_QUERIES
     for q in queries:
@@ -159,10 +161,12 @@ def mut(kl, log, addr=0x00, baud=15625, ack=False, queries=None, method="break",
     outcome = _base_outcome(res, post, sync, kl)
     summary = ["ALIVE-BEFORE"] if alive["resp"] != "-" else []
     summary.append(f"lb={res['loopback']} post={_clip(res['post'])}")
+    ack_failed = require_ack and ack
     if sync and "kb" in sync and ack:
         res["ack"] = _ack(kl, sync["t_kb2"], sync["kb2"])
         summary.append(f"ack->{res['ack']['reply']}")
-    if queries and (sync or post or always_query):
+        ack_failed = require_ack and res["ack"]["reply"] != f"{(~addr) & 0xFF:02X}"
+    if queries and (sync or post or always_query) and not ack_failed:
         kl.sleep(0.02)
         res["queries"] = [mut_query(kl, q) for q in queries]
         if outcome == "SILENT" and not any(q["echo"] for q in res["queries"]):
@@ -180,6 +184,37 @@ def mut(kl, log, addr=0x00, baud=15625, ack=False, queries=None, method="break",
             summary.append("q:" + _clip(" ".join(q["resp"] for q in res["queries"]), 30))
     res.update(outcome=outcome, summary=" ".join(summary))
     return res
+
+
+# Ways to open a MUT session, for the live viewers (mut_gui, mut_web).
+# 'mut': MUT-II as on European 1990s ECUs and Evo 4-9: 5-baud 0x00, ECU answers 55 EF 85 at
+#        15625 baud, no acknowledge. Confirmed on the test car (ECU E4 3A).
+# 'obd': OBD-II address 0x33 (ISO 9141-2: 55 KB1 KB2 at 10400, ~KB2, ECU answers ~0x33 = CC),
+#        then the same 1-byte MUT requests. This is the init EvoScan sends in its
+#        "DSM/3000GT/Eclipse MUTovrOBDII" mode (seen with a K-line sniffer), meant for US cars
+#        with OBD-II. Not verified on a car: the EU test ECU does not answer 0x33.
+INIT_METHODS = {
+    "mut": {"addr": 0x00, "baud": 15625, "ack": False, "label": "MUT-II 0x00 @ 15625"},
+    "obd": {"addr": 0x33, "baud": 10400, "ack": True, "label": "OBD-II 0x33 @ 10400"},
+}
+INIT_MODES = ("auto", "mut", "obd")  # 'auto' alternates between the two
+
+
+def init_order(mode, last_good=None):
+    """Methods to try, in order; 'auto' starts with the one that worked last."""
+    if mode in INIT_METHODS:
+        return [mode]
+    order = list(INIT_METHODS)
+    if last_good in order:
+        order.remove(last_good)
+        order.insert(0, last_good)
+    return order
+
+
+def connect(kl, log, method, queries=MUT_ID_QUERIES):
+    """Open a MUT session with one init method; outcome 'DATA' = connected."""
+    p = INIT_METHODS[method]
+    return mut(kl, log, addr=p["addr"], baud=p["baud"], ack=p["ack"], queries=queries, require_ack=p["ack"])
 
 
 def mutdump(kl, log, addr=0x00, baud=15625, start=0x00, end=0xBF, method="break"):
